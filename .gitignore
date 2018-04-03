@@ -1,0 +1,49 @@
+# All files specified here will be ignored by git 
+
+# Vim swap files 
+*.swp
+
+# Emacs cache files
+*~
+\#*\#
+
+# OSX specific files
+.DS_Store
+
+# Windows specific files 
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# R files to ignore 
+*.Rproj
+.Rproj.user/
+.Rhistory
+.Rapp.history
+.RData
+*.RData
+*.rdb
+*.rdx
+/*.tar.gz
+/*.Rcheck/
+vignettes/*.html
+vignettes/*.pdf
+.httr-oauth
+
+# Python files
+*.py[cod]
+eggs/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+.ipynb_checkpoints
+.env
+.Rproj.user
+*.pkl
