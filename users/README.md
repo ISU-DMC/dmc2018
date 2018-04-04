@@ -29,5 +29,5 @@ to be announced later...
 | [feilittle](https://github.com/feilittle) | | |
 | [XiaodanLyu](https://github.com/XiaodanLyu) | | |
 | [YushanGu](https://github.com/YushanGu) | | |
-| [kgulzina](https://github.com/kgulzina) | | |
+| [kgulzina](https://github.com/kgulzina) | Gulzina | |
 | [zzj8222090](https://github.com/zzj8222090) | Zijian | The Legend of Zelda BOTW --Best Game EVER |
