@@ -27,3 +27,6 @@ to be announced later...
 | [yuchenw2015](https://github.com/yuchenw2015) | | |
 | [yudizhangzyd](https://github.com/yudizhangzyd) | | |
 | [zzj8222090](https://github.com/zzj8222090) | | |
+| [feilittle](https://github.com/feilittle) | | |
+| [XiaodanLyu](https://github.com/XiaodanLyu) | | |
+| [YushanGu](https://github.com/YushanGu) | | |
