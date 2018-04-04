@@ -22,7 +22,7 @@ to be announced later...
 | [ShanYu3393](https://github.com/ShanYu3393) | | |
 | [syrnluo](https://github.com/syrnluo) | | |
 | [urmi-21](https://github.com/urmi-21) | | |
-| [wangyan-iastate](https://github.com/wangyan-iastate) | | |
+| [wangyan-iastate](https://github.com/wangyan-iastate) | Yan | Fitter, healthier, and more productive. |
 | [weijiaweijia](https://github.com/weijiaweijia) | | |
 | [yuchenw2015](https://github.com/yuchenw2015) | | |
 | [yudizhangzyd](https://github.com/yudizhangzyd) | | |
