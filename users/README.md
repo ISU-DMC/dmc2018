@@ -27,7 +27,7 @@ to be announced later...
 | [yuchenw2015](https://github.com/yuchenw2015) | | |
 | [yudizhangzyd](https://github.com/yudizhangzyd) | | |
 | [feilittle](https://github.com/feilittle) | | |
-| [XiaodanLyu](https://github.com/XiaodanLyu) | | |
+| [XiaodanLyu](https://github.com/XiaodanLyu) | Xiaodan (Annie) | No pain, no gain.|
 | [YushanGu](https://github.com/YushanGu) | | |
 | [kgulzina](https://github.com/kgulzina) | Gulzina | |
 | [zzj8222090](https://github.com/zzj8222090) | Zijian | The Legend of Zelda BOTW --Best Game EVER |
