@@ -15,7 +15,7 @@ to be announced later...
 | [kstatju](https://github.com/kstatju) | | |
 | [lijing28101](https://github.com/lijing28101) | |	|
 | [mczahor02](https://github.com/mczahor02) | | |
-| [mujingru](https://github.com/mujingru) | | |
+| [mujingru](https://github.com/mujingru) | Jingru | |
 | [omnijust](https://github.com/omnijust) | | |
 | [qiaoyang00](https://github.com/qiaoyang00) | |  |
 | [rksyouyou](https://github.com/rksyouyou) | | |
