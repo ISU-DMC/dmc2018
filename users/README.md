@@ -19,8 +19,8 @@ to be announced later...
 | [omnijust](https://github.com/omnijust) | | |
 | [qiaoyang00](https://github.com/qiaoyang00) | |  |
 | [rksyouyou](https://github.com/rksyouyou) | | |
-| [ShanYu3393](https://github.com/ShanYu3393) |Shan| |
-| [syrnluo](https://github.com/syrnluo) |Jiayi|Mangoes and avocados are a perfect match!|
+| [ShanYu3393](https://github.com/ShanYu3393) |Shan| Excited about rainy days!|
+| [syrnluo](https://github.com/syrnluo) | | |
 | [urmi-21](https://github.com/urmi-21) | | |
 | [wangyan-iastate](https://github.com/wangyan-iastate) | Yan | Fitter, healthier, and more productive. |
 | [weijiaweijia](https://github.com/weijiaweijia) | | |
