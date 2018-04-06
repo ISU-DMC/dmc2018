@@ -20,7 +20,7 @@ to be announced later...
 | [qiaoyang00](https://github.com/qiaoyang00) | |  |
 | [rksyouyou](https://github.com/rksyouyou) | | |
 | [ShanYu3393](https://github.com/ShanYu3393) |Shan| |
-| [syrnluo](https://github.com/syrnluo) | | |
+| [syrnluo](https://github.com/syrnluo) |Jiayi|Mangoes and avocados are a perfect match!|
 | [urmi-21](https://github.com/urmi-21) | | |
 | [wangyan-iastate](https://github.com/wangyan-iastate) | Yan | Fitter, healthier, and more productive. |
 | [weijiaweijia](https://github.com/weijiaweijia) | | |
