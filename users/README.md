@@ -26,7 +26,7 @@ to be announced later...
 | [weijiaweijia](https://github.com/weijiaweijia) | | |
 | [yuchenw2015](https://github.com/yuchenw2015) | | |
 | [yudizhangzyd](https://github.com/yudizhangzyd) | | |
-| [feilittle](https://github.com/feilittle) | | |
+| [feilittle](https://github.com/feilittle) | Xiaofei |  |
 | [XiaodanLyu](https://github.com/XiaodanLyu) | Xiaodan (Annie) | No pain, no gain.|
 | [YushanGu](https://github.com/YushanGu) | | |
 | [kgulzina](https://github.com/kgulzina) | Gulzina | |
