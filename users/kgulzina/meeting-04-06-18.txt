@@ -1,0 +1,19 @@
+DMC meeting 04/06/18
+
+- combine all three csv
+- pid and size common in all datasets
+- combination of pid and size == one product
+- main categories, categories and sub == factors 
+- Missing values : items/ subcategory (only one)
+- Release date ???? check
+- Stock = number of products that were here on February 1st
+- When the STOCK == 0 in February: 1 to 28  >>>> Our goal: DATE
+- Product ID and size == Unique
+- 12824 rows of predictions
+- Units: how many were sold in some particular date (of that product)
+- *** Keep the time series of the products sold amount: day by day (new variable)
+- *** Clustering technique for the type of the product: Jackets, Shoes, Accessories .. etc 
+- 10 variables : take one variable, explore everything that you can about it 
+- Variable: double it, triple, etc
+- Make a row for every product including price for all 4 months (combined with others)
+- COLOR: chosen
