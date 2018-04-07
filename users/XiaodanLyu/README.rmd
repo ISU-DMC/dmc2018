@@ -1,0 +1,35 @@
+---
+title: "Findings"
+author: Xiaodan Lyu
+date: Sys.Date()
+output:
+  md_document:
+    variant: markdown_github
+---
+
+```{r external-code, cashe=FALSE, echo=FALSE}
+knitr::opts_chunk$set(message = F, warning = F, fig.path = 'figures/')
+knitr::read_chunk('exploration.r')
+```
+
+## My findings 
+
+#### read data
+```{r input}
+```
+
+#### data quality
+```{r quality}
+```
+
+#### dates at a glance
+```{r dates}
+```
+
+#### price & date
+```{r prices}
+```
+
+#### calendar plots
+```{r calendar}
+```
