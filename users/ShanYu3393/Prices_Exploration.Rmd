@@ -1,0 +1,40 @@
+---
+title: "Prices Dataset Exploration"
+output:
+  html_document:
+    df_print: paged
+---
+```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
+library(sugrrants)
+library(tidyverse)
+library(lubridate)
+setwd("~/Dropbox/DMC")
+train <- read.csv("raw_data/train.csv", sep = "|")
+prices <- read.csv("raw_data/prices.csv", sep = "|")
+items <- read.csv("raw_data/items.csv", sep = "|")
+```
+There are no missing data in train.
+```{r,warning=FALSE,message=FALSE,error=FALSE}
+## no missing in training data
+apply(train, 2, function(x) sum(is.na(x)))
+```
+There are 1134 missing data in subCategory
+```{r,warning=FALSE,message=FALSE,error=FALSE}
+## some missing in subCategory
+apply(items, 2, function(x) sum(is.na(x)))
+```
+## Price Changes
+123 dates in the first 4 months
+```{r,warning=FALSE,message=FALSE,error=FALSE}
+date <- ymd(train$date)
+range(date)
+unique(date) %>% length()
+```
+For the majority of the items, the prices are kept the same over the time. The prices tends to change more in the February (to sold out).
+```{r,warning=FALSE,message=FALSE,error=FALSE}
+f=function(x) length(unique(x))
+# check the price change in from 2017-10-01 to 2018-01-31
+table(apply(prices[,3:125],1,f))
+# check the price change in from 2017-10-01 to 2018-02-28
+table(apply(prices[,3:153],1,f))
+```
