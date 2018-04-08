@@ -12,7 +12,7 @@ to be announced later...
 | [abhicc](https://github.com/abhicc) | Abhishek | I love to run, bike and, swim, but not all on the same day :P |
 | [EugeneHao](https://github.com/EugeneHao) | | |
 | [jiamingqiu](https://github.com/jiamingqiu) | | |
-| [kstatju](https://github.com/kstatju) | | |
+| [kstatju](https://github.com/kstatju) | Kanak | |
 | [lijing28101](https://github.com/lijing28101) | |	|
 | [mczahor02](https://github.com/mczahor02) | | |
 | [mujingru](https://github.com/mujingru) | Jingru | |
