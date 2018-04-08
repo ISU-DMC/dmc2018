@@ -13,7 +13,7 @@ to be announced later...
 | [EugeneHao](https://github.com/EugeneHao) | Hao | |
 | [jiamingqiu](https://github.com/jiamingqiu) | | |
 | [kstatju](https://github.com/kstatju) | Kanak | |
-| [lijing28101](https://github.com/lijing28101) | |	|
+| [lijing28101](https://github.com/lijing28101) | Jing |	|
 | [mczahor02](https://github.com/mczahor02) | | |
 | [mujingru](https://github.com/mujingru) | Jingru | |
 | [omnijust](https://github.com/omnijust) | | |
