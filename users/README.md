@@ -21,7 +21,7 @@ to be announced later...
 | [rksyouyou](https://github.com/rksyouyou) | | |
 | [ShanYu3393](https://github.com/ShanYu3393) |Shan| Excited about rainy days!|
 | [syrnluo](https://github.com/syrnluo) |Jiayi|Mangoes and avocados are a perfect match! |
-| [urmi-21](https://github.com/urmi-21) | | |
+| [urmi-21](https://github.com/urmi-21) |Urmi | |
 | [wangyan-iastate](https://github.com/wangyan-iastate) | Yan | Fitter, healthier, and more productive. |
 | [weijiaweijia](https://github.com/weijiaweijia) | Weijia Su | |
 | [yuchenw2015](https://github.com/yuchenw2015) | | |
