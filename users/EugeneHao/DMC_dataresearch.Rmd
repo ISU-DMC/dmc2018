@@ -62,9 +62,8 @@ unique(train$date) %>% length()
 ## about 85% of the items released before 2017-10-01
 items$releaseDate <- ymd(items$releaseDate)   
 mean(items$releaseDate == ymd("2017-10-01"))
-range(items$date)
 items_dif<-as.vector(items$releaseDate-min(items$releaseDate))
-hist(items_dif,breaks=13)
+hist(items_dif,breaks=25)
 ```
 
 ```{r}
@@ -83,7 +82,7 @@ table(items$rrp)
 ``` 
 
 ```{r}
-items%>%filter(size=="")
+items%>%filter(size=="") %>% pander
 ```
 These 9 items do not have a size and they all belong to mainCategory 1, category 2 and subcategory 27. By checking the table above, we find that these items are the only items that belong to subCategory 27. 
 

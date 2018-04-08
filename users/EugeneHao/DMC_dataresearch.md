@@ -235,16 +235,8 @@ have different subcategories.
 
     ## [1] 0.849345
 
-    range(items$date)
-
-    ## Warning in min(x, na.rm = na.rm): min里所有的参数都不存在; 回覆Inf
-
-    ## Warning in max(x, na.rm = na.rm): max里所有的参数都不存在；回覆-Inf
-
-    ## [1]  Inf -Inf
-
     items_dif<-as.vector(items$releaseDate-min(items$releaseDate))
-    hist(items_dif,breaks=13)
+    hist(items_dif,breaks=25)
 
 ![](DMC_dataresearch_files/figure-markdown_strict/unnamed-chunk-5-1.png)
 
@@ -370,11 +362,176 @@ sizes.
     ## 361.88 368.23 380.93 399.98 406.33 412.68 419.03 444.43 463.48 
     ##      2    155    264     13      2     10     47      3      1
 
-    items%>%filter(size=="")
+    items%>%filter(size=="") %>% pander
 
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["pid"],"name":[1],"type":["int"],"align":["right"]},{"label":["size"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["color"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["brand"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["rrp"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["mainCategory"],"name":[6],"type":["int"],"align":["right"]},{"label":["category"],"name":[7],"type":["int"],"align":["right"]},{"label":["subCategory"],"name":[8],"type":["int"],"align":["right"]},{"label":["stock"],"name":[9],"type":["int"],"align":["right"]},{"label":["releaseDate"],"name":[10],"type":["date"],"align":["right"]}],"data":[{"1":"10400","2":"","3":"schwarz","4":"adidas","5":"12.63","6":"1","7":"2","8":"27","9":"1","10":"2017-10-01"},{"1":"10609","2":"","3":"schwarz","4":"Uhlsport","5":"5.01","6":"1","7":"2","8":"27","9":"8","10":"2017-10-01"},{"1":"13515","2":"","3":"schwarz","4":"Uhlsport","5":"2.47","6":"1","7":"2","8":"27","9":"1","10":"2017-10-01"},{"1":"15996","2":"","3":"schwarz","4":"Uhlsport","5":"6.28","6":"1","7":"2","8":"27","9":"3","10":"2017-10-01"},{"1":"18754","2":"","3":"schwarz","4":"Uhlsport","5":"2.47","6":"1","7":"2","8":"27","9":"2","10":"2017-10-01"},{"1":"19517","2":"","3":"silber","4":"adidas","5":"15.17","6":"1","7":"2","8":"27","9":"1","10":"2017-10-01"},{"1":"19891","2":"","3":"schwarz","4":"Uhlsport","5":"2.47","6":"1","7":"2","8":"27","9":"3","10":"2017-10-01"},{"1":"20248","2":"","3":"weiss","4":"Uhlsport","5":"5.01","6":"1","7":"2","8":"27","9":"8","10":"2017-10-01"},{"1":"21001","2":"","3":"silber","4":"Uhlsport","5":"8.82","6":"1","7":"2","8":"27","9":"1","10":"2017-10-01"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
+<table style="width:96%;">
+<caption>Table continues below</caption>
+<colgroup>
+<col width="11%" />
+<col width="9%" />
+<col width="13%" />
+<col width="15%" />
+<col width="11%" />
+<col width="20%" />
+<col width="13%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">pid</th>
+<th align="center">size</th>
+<th align="center">color</th>
+<th align="center">brand</th>
+<th align="center">rrp</th>
+<th align="center">mainCategory</th>
+<th align="center">category</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">10400</td>
+<td align="center"></td>
+<td align="center">schwarz</td>
+<td align="center">adidas</td>
+<td align="center">12.63</td>
+<td align="center">1</td>
+<td align="center">2</td>
+</tr>
+<tr class="even">
+<td align="center">10609</td>
+<td align="center"></td>
+<td align="center">schwarz</td>
+<td align="center">Uhlsport</td>
+<td align="center">5.01</td>
+<td align="center">1</td>
+<td align="center">2</td>
+</tr>
+<tr class="odd">
+<td align="center">13515</td>
+<td align="center"></td>
+<td align="center">schwarz</td>
+<td align="center">Uhlsport</td>
+<td align="center">2.47</td>
+<td align="center">1</td>
+<td align="center">2</td>
+</tr>
+<tr class="even">
+<td align="center">15996</td>
+<td align="center"></td>
+<td align="center">schwarz</td>
+<td align="center">Uhlsport</td>
+<td align="center">6.28</td>
+<td align="center">1</td>
+<td align="center">2</td>
+</tr>
+<tr class="odd">
+<td align="center">18754</td>
+<td align="center"></td>
+<td align="center">schwarz</td>
+<td align="center">Uhlsport</td>
+<td align="center">2.47</td>
+<td align="center">1</td>
+<td align="center">2</td>
+</tr>
+<tr class="even">
+<td align="center">19517</td>
+<td align="center"></td>
+<td align="center">silber</td>
+<td align="center">adidas</td>
+<td align="center">15.17</td>
+<td align="center">1</td>
+<td align="center">2</td>
+</tr>
+<tr class="odd">
+<td align="center">19891</td>
+<td align="center"></td>
+<td align="center">schwarz</td>
+<td align="center">Uhlsport</td>
+<td align="center">2.47</td>
+<td align="center">1</td>
+<td align="center">2</td>
+</tr>
+<tr class="even">
+<td align="center">20248</td>
+<td align="center"></td>
+<td align="center">weiss</td>
+<td align="center">Uhlsport</td>
+<td align="center">5.01</td>
+<td align="center">1</td>
+<td align="center">2</td>
+</tr>
+<tr class="odd">
+<td align="center">21001</td>
+<td align="center"></td>
+<td align="center">silber</td>
+<td align="center">Uhlsport</td>
+<td align="center">8.82</td>
+<td align="center">1</td>
+<td align="center">2</td>
+</tr>
+</tbody>
+</table>
+
+<table style="width:49%;">
+<colgroup>
+<col width="19%" />
+<col width="11%" />
+<col width="18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">subCategory</th>
+<th align="center">stock</th>
+<th align="center">releaseDate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">27</td>
+<td align="center">1</td>
+<td align="center">2017-10-01</td>
+</tr>
+<tr class="even">
+<td align="center">27</td>
+<td align="center">8</td>
+<td align="center">2017-10-01</td>
+</tr>
+<tr class="odd">
+<td align="center">27</td>
+<td align="center">1</td>
+<td align="center">2017-10-01</td>
+</tr>
+<tr class="even">
+<td align="center">27</td>
+<td align="center">3</td>
+<td align="center">2017-10-01</td>
+</tr>
+<tr class="odd">
+<td align="center">27</td>
+<td align="center">2</td>
+<td align="center">2017-10-01</td>
+</tr>
+<tr class="even">
+<td align="center">27</td>
+<td align="center">1</td>
+<td align="center">2017-10-01</td>
+</tr>
+<tr class="odd">
+<td align="center">27</td>
+<td align="center">3</td>
+<td align="center">2017-10-01</td>
+</tr>
+<tr class="even">
+<td align="center">27</td>
+<td align="center">8</td>
+<td align="center">2017-10-01</td>
+</tr>
+<tr class="odd">
+<td align="center">27</td>
+<td align="center">1</td>
+<td align="center">2017-10-01</td>
+</tr>
+</tbody>
+</table>
 
 These 9 items do not have a size and they all belong to mainCategory 1,
 category 2 and subcategory 27. By checking the table above, we find that
