@@ -1,0 +1,96 @@
+---
+title: "DMC1"
+author: "Hao Sun"
+output:
+  md_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r include=FALSE,results='hide'}
+#read data
+library(tidyverse)
+library(sugrrants)
+library(lubridate)
+library(pander)
+items<-read.csv(file="D:\\PhD\\Project\\DMC\\raw_data\\items.csv",head=T,sep="|")
+#  pid  size  color  brand  rrp  mainCategory  category  subCategory  stock  releaseDate
+train<-read.csv(file="D:\\PhD\\Project\\DMC\\raw_data\\train.csv",head=T,sep="|")
+#  date  pid  size  units
+prices<-read.csv(file="D:\\PhD\\Project\\DMC\\raw_data\\prices.csv",head=T,sep="|")
+#  pid  size  date(from 2017/10/1 to 2018/2/28)
+
+
+
+```
+
+```{r}
+apply(train, 2, function(x) sum(is.na(x)))
+apply(items, 2, function(x) sum(is.na(x)))
+
+
+```
+The items has missing data in subCategory
+
+```{r}
+table(items$mainCategory)
+table(items$category)
+table(items$subCategory)
+table(items$category,items$mainCategory) %>% pander
+table(items$subCategory,items$mainCategory)
+table(items$subCategory,items$category)
+items %>% filter(mainCategory==15) %>% select(subCategory) %>% is.na() %>% sum()
+table(items$mainCategory,items$brand)
+
+```
+From the tables above, there are 3 main categories and each of them has its unique categories. All the products whose mainCategory are 15 do not have subCategory. Besides, in each maincategory, different categories have different subcategories. 
+
+
+
+```{r}
+train$date <- ymd(train$date)
+range(train$date)
+range(train$date) %>% diff   
+unique(train$date) %>% length()
+```
+
+```{r}
+## about 85% of the items released before 2017-10-01
+items$releaseDate <- ymd(items$releaseDate)   
+mean(items$releaseDate == ymd("2017-10-01"))
+range(items$date)
+items_dif<-as.vector(items$releaseDate-min(items$releaseDate))
+hist(items_dif,breaks=13)
+```
+
+```{r}
+unique(items$pid) %>%length()
+items %>% group_by(pid) %>%
+  summarise(ndate = unique(releaseDate) %>% length) %>%
+  select(ndate) %>% table()
+```
+Therefore, we know that each product had only one release date for all sizes. 
+
+```{r} 
+table(items$size) %>% names()
+table(items$color)
+table(items$brand)
+table(items$rrp)
+``` 
+
+```{r}
+items%>%filter(size=="")
+```
+These 9 items do not have a size and they all belong to mainCategory 1, category 2 and subcategory 27. By checking the table above, we find that these items are the only items that belong to subCategory 27. 
+
+```{r}
+main_vs_size<-table(items$size,items$mainCategory)
+write.csv(main_vs_size,file="D:\\PhD\\Project\\DMC\\main_vs_size.csv")
+c_vs_size<-table(items$size,items$category)
+write.csv(c_vs_size,file="D:\\PhD\\Project\\DMC\\c_vs_size.csv")
+```
+
