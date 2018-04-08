@@ -10,7 +10,7 @@ to be announced later...
 | GitHub ID | Name | Fun fact |
 |---|---|---|
 | [abhicc](https://github.com/abhicc) | Abhishek | I love to run, bike and, swim, but not all on the same day :P |
-| [EugeneHao](https://github.com/EugeneHao) | | |
+| [EugeneHao](https://github.com/EugeneHao) | Hao | |
 | [jiamingqiu](https://github.com/jiamingqiu) | | |
 | [kstatju](https://github.com/kstatju) | Kanak | |
 | [lijing28101](https://github.com/lijing28101) | |	|
