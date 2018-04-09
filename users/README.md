@@ -18,7 +18,7 @@ to be announced later...
 | [mujingru](https://github.com/mujingru) | Jingru | |
 | [omnijust](https://github.com/omnijust) | | |
 | [qiaoyang00](https://github.com/qiaoyang00) | |  |
-| [rksyouyou](https://github.com/rksyouyou) | | |
+| [rksyouyou](https://github.com/rksyouyou) | Meiling| |
 | [ShanYu3393](https://github.com/ShanYu3393) |Shan| Excited about rainy days!|
 | [syrnluo](https://github.com/syrnluo) |Jiayi|Mangoes and avocados are a perfect match! |
 | [urmi-21](https://github.com/urmi-21) |Urmi| |
