@@ -24,8 +24,6 @@ train<-read.csv(file="D:\\PhD\\Project\\DMC\\raw_data\\train.csv",head=T,sep="|"
 prices<-read.csv(file="D:\\PhD\\Project\\DMC\\raw_data\\prices.csv",head=T,sep="|")
 #  pid  size  date(from 2017/10/1 to 2018/2/28)
 
-
-
 ```
 
 ```{r}
@@ -93,3 +91,24 @@ c_vs_size<-table(items$size,items$category)
 write.csv(c_vs_size,file="D:\\PhD\\Project\\DMC\\c_vs_size.csv")
 ```
 
+Study Price
+```{r echo=FALSE}
+for(i in nrow(prices):1) 
+  for(j in (ncol(prices)-1):3)
+    if(is.na(prices[i,j])==TRUE)
+      prices[i,j]<-prices[i,j+1]   #let all missing price be equal to the first released price
+write.csv(prices,file="D:\\PhD\\Project\\DMC\\prices2.csv")
+
+
+```
+
+```{r}
+prices2<-read.csv(file="D:\\PhD\\Project\\DMC\\prices2.csv",header=T)
+price_dif<-apply(prices2[,-c(1,2,3)],MARGIN = 1,diff)  #difference between two adjacent days
+find_price_dif<-function(x) {
+  return(sum(x!=0)!=0)
+}
+price_dif<-t(price_dif)
+sum(apply(price_dif,MARGIN = 1,find_price_dif))  
+```
+We find that there are only 1866 items among 12824 items that had price change from 2017-10-1 to 2018-1-31. 

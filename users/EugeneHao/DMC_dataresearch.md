@@ -541,3 +541,18 @@ these items are the only items that belong to subCategory 27.
     write.csv(main_vs_size,file="D:\\PhD\\Project\\DMC\\main_vs_size.csv")
     c_vs_size<-table(items$size,items$category)
     write.csv(c_vs_size,file="D:\\PhD\\Project\\DMC\\c_vs_size.csv")
+
+Study Price
+
+    prices2<-read.csv(file="D:\\PhD\\Project\\DMC\\prices2.csv",header=T)
+    price_dif<-apply(prices2[,-c(1,2,3)],MARGIN = 1,diff)  #difference between two adjacent days
+    find_price_dif<-function(x) {
+      return(sum(x!=0)!=0)
+    }
+    price_dif<-t(price_dif)
+    sum(apply(price_dif,MARGIN = 1,find_price_dif))  
+
+    ## [1] 1866
+
+We find that there are only 1866 items among 12824 items that had price
+change from 2017-10-1 to 2018-1-31.
