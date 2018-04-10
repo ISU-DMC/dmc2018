@@ -85,8 +85,11 @@ dim(pca.sale$scores)
 plot(pca.sale$scores[,1:2])
 # a mess
 
+# backup before I ruin everything
+dat.wide.origin = dat.wide
+
 # try smooth them a bit?
-dat.wide[,11:133] = apply(dat.wide[,11:133], 1,
+dat.wide[,11:133] = apply(dat.wide.origin[,11:133], 1,
                           function(x){
                             ksmooth(11:133, x, kernel = 'normal', bandwidth = 2)$y
                           }
@@ -137,3 +140,9 @@ n.type = length(unique(col.arr))
 plot(pca.psale$x[dat.info$releaseDate!='2017-10-01',1:2], col = rainbow(n.type, alpha = 0.65)[
   as.numeric(as.character(factor(col.arr, labels = 1:n.type, levels = sort(unique(col.arr)))))])
 
+# cannot MDS for 12824 points, consider k-means, i.e. MDS on centers of k-means
+set.seed(100)
+k.res = kmeans(as.matrix(dat.wide[,11:133]), centers = 1000)
+# MDS, though make no sense
+mds.res = cmdscale(dist(k.res$centers), k=2)
+plot(mds.res)
