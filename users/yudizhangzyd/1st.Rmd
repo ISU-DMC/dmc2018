@@ -2,8 +2,14 @@
 title: "categroy.data"
 author: "Yudi Zhang"
 date: "4/8/2018"
-output: html_document
+output:
+  md_document:
+    variant: markdown_github
 ---
+```{r external-code, cashe=FALSE, echo=FALSE}
+knitr::opts_chunk$set(message = F, warning = F, fig.path = 'figures/')
+knitr::read_chunk('exploration.r')
+```
 
 ```{r}
 items <- read.csv("/Users/yudi/Downloads/DMC-2018/raw_data/items.csv", sep = "|")
