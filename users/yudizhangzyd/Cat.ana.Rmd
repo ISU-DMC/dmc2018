@@ -9,7 +9,7 @@ output:
 
 ```{r external-code, cashe=FALSE, echo=FALSE}
 knitr::opts_chunk$set(message = F, warning = F, fig.path = 'figures/')
-knitr::read_chunk('exploration.r')
+
 ```
 
 
