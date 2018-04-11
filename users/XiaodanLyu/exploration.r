@@ -2,6 +2,8 @@
 library(sugrrants)
 library(tidyverse)
 library(lubridate)
+library(forcats)
+library(corrplot)
 setwd("~/Dropbox/dmc2018")
 train <- read.csv("data/raw_data/train.csv", sep = "|")
 prices <- read.csv("data/raw_data/prices.csv", sep = "|")
@@ -36,21 +38,21 @@ prices_long %>% glimpse
 items %>% group_by(pid) %>%
   summarise(ndate = unique(releaseDate) %>% length) %>%
   select(ndate) %>% table()
-## * before releasedate, any non-missing prices? Yes ####
+## * before releasedate, any non-missing prices? Yes 
 items %>% left_join(prices_long, by = c("pid", "size")) %>% 
   filter(date < releaseDate, !is.na(price)) -> prices_suspicious
 prices_suspicious %>% glimpse
-## 688 different pid
-prices_suspicious %>% select(pid) %>% unique %>% dim
-## in each row, date is one-day earlier than releaseDate, suggesting wrong releaseDate?
+## all products released after 2017-10-01 have price info before release date 
+anti_join(items %>% filter(releaseDate > ymd("2017-10-01")),
+          prices_suspicious, by = "pid") %>% dim
+## in each row, date is one-day earlier than releaseDate
 prices_suspicious %>% mutate(diff_date = date-releaseDate) %>% select(diff_date) %>% table()
-## * after releasedate, any missing prices? No ####
-## no missing price
+## * after releasedate, any missing prices? No 
 items %>% left_join(prices_long, by = c("pid", "size")) %>% 
   filter(date >= releaseDate) %>% select(price) %>% summary()
 
 ## ---- calendar
-## remarkable more sales on Black Friday 2017-11-24
+## remarkably more sales on Black Friday 2017-11-24
 train.sales <- train %>% group_by(date) %>% summarise(n = sum(units)) %>% ungroup 
 train.sales %>%
   frame_calendar(x = 1, y = 1, date = date) %>%
@@ -87,17 +89,19 @@ items %>% group_by(brand) %>%
             ncat = length(unique(category)),
             nsubcat = length(unique(subCategory)),
             nnewrelease = length(unique(pid[releaseDate>ymd("2017-10-01")]))
-            ) %>% 
+  ) %>% 
   arrange(desc(npid)) -> brands
+brands <- brands %>% mutate(brand = fct_reorder(brand, nstock, mean)) %>%
+  mutate(order = as.numeric(brand)) %>% mutate(brand = paste(order, brand, sep = "-"))
 str(brands)
-brandst <- data.frame(t(brands[,-1]))
-colnames(brandst) <- unlist(paste(brands$npid, brands$brand, sep = "-"))
+## standardize variables before computing correlation
+brandst <- data.frame(t(scale(brands[,-1])))
+colnames(brandst) <- unlist(brands$brand)
 str(brandst)
 brands.cor <- cor(brandst)
-library(corrplot)
-corrplot(brands.cor, type = "upper")
+corrplot(brands.cor, type = "upper", order = "hclust")
 
-library(forcats)
+
 ## rename brand by adding rank of # of stock
 items %>% mutate(brand = fct_reorder(brand, stock, sum)) %>%
   mutate(rank = as.numeric(brand)) %>%
@@ -124,3 +128,7 @@ ggplot(data = train %>% left_join(items.brand, by = c("pid", "size")) %>%
   geom_boxplot(aes(x = brand, y = units, color = brand), alpha = 0.6) +
   scale_y_log10() + theme_bw(base_size = 15) + guides(color = FALSE) +
   theme(axis.text.x = element_text(angle = 45))
+
+## ---- prices again
+## same product may have difference daily prices for different sizes
+prices_long %>% filter(pid == 16427, date == ymd("2017-10-01"))
