@@ -9,6 +9,7 @@ output:
 
 
 ```{r}
+##
 items <- read.csv("/Users/yudi/Downloads/DMC-2018/raw_data/items.csv", sep = "|")
 View(items)
 prices <- read.csv("/Users/yudi/Downloads/DMC-2018/raw_data/prices.csv", sep = "|")
