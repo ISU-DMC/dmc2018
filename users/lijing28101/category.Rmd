@@ -1,0 +1,42 @@
+---
+title: "finding in category"
+author: "Jing Li"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+---
+
+```{r}
+library(ggplot2)
+source("http://pcwww.liv.ac.uk/~william/R/crosstab.r")
+price <- read.csv("~/../Desktop/DMC/raw_data/prices.csv",sep = "|")
+train <- read.csv("~/../Desktop/DMC/raw_data/train.csv",sep="|")
+items <- read.csv("~/../Desktop/DMC/raw_data/items.csv",sep='|')
+```
+
+```{r}
+#Cross tabulation for mainCategory and category
+#Only category 37 belongs to both mainCategory 1 and 9, the other categories are unique for each mainCategory
+xtabs(~mainCategory+category,items)
+main1 <- subset(items,mainCategory==1)
+main9 <- subset(items,mainCategory==9)
+main15 <- subset(items,mainCategory==15)
+#Cross tabulation for category and subCategory in mainCategory 1
+crosstab(main1, col.vars = "category", row.vars = "subCategory", type = "f")
+#Cross tabulation for category and subCategory in mainCategory 9
+crosstab(main9, col.vars = "category", row.vars = "subCategory", type = "f")
+#mainCategory 15 have no subCategory
+table(main15$category)
+```
+
+```{r}
+#Boxplot of rrp for each category
+#mainCategory 1 havs large variance, especially for category 2.
+#rrp for mainCategory 15 has the smallest varience, and is cheapest.
+items$category <- factor(items$category, levels = c(2,7,37,10,18,36,16,24,30,33))
+ggplot(items,aes(x=as.factor(category),y=rrp,fill=as.factor(mainCategory)))+
+  geom_boxplot()+stat_boxplot(geom ='errorbar')+
+  scale_fill_discrete(name="mainCategory")+
+  labs(x="category",title="Distribution of rrp for each category")
+
+```
