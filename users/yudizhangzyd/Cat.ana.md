@@ -1,12 +1,11 @@
 ``` r
-##
 items <- read.csv("/Users/yudi/Downloads/DMC-2018/raw_data/items.csv", sep = "|")
 View(items)
 prices <- read.csv("/Users/yudi/Downloads/DMC-2018/raw_data/prices.csv", sep = "|")
 train <- read.csv("/Users/yudi/Downloads/DMC-2018/raw_data/train.csv", sep = "|")
 ```
 
-1. Data.Overview
+1. Data Overview
 ----------------
 
 ``` r
@@ -534,12 +533,22 @@ table(items$subCategory, items$mainCategory) %>% pander()
 </tbody>
 </table>
 
+2.Plots
+-------
+
 ``` r
 train %>% group_by(pid, size) %>% summarise(tot = sum(units)) -> totalsale
 inner_join(items, totalsale) -> dat.for.ana
 
 #Sales units by maincat, subcat and categories
-dat.for.ana %>% group_by(category, subCategory, mainCategory) %>% summarise(tot.sale=sum(tot)) %>% ggplot(aes(x = as.factor(subCategory),y = tot.sale,col = as.factor(category), shape = as.factor(mainCategory))) + geom_point() + labs(y='Sales Units in the Past Months', x="subCategory") + scale_colour_discrete(name  ="category") + scale_shape_discrete(name  ="mainCategory") 
+dat.for.ana %>% group_by(category, subCategory, mainCategory) %>% summarise(tot.sale=sum(tot)) %>% ggplot(aes(x = as.factor(subCategory),y = tot.sale,col = as.factor(category), shape = as.factor(mainCategory))) + geom_point() + labs(y='Sales Units in the Past Months', x="subCategory") + scale_colour_discrete(name  ="category") + scale_shape_discrete(name  ="mainCategory")
 ```
 
 ![](figures/unnamed-chunk-4-1.png)
+
+``` r
+#Stock by maincat, subcat and categories
+dat.for.ana %>% group_by(category, subCategory, mainCategory) %>% summarise(tot.stock=sum(stock)) %>% ggplot(aes(x = as.factor(subCategory),y = tot.stock,col = as.factor(category), shape = as.factor(mainCategory))) + geom_point() + labs(y='Stock', x="subCategory") + scale_colour_discrete(name  ="category") + scale_shape_discrete(name  ="mainCategory")
+```
+
+![](figures/unnamed-chunk-4-2.png)
