@@ -73,3 +73,54 @@ items.release %>% filter(releaseDate != ymd("2017-10-01")) %>%
   scale_fill_distiller(name = "", palette = "RdYlBu") -> p2.release
 prettify(p2.release, label = c("label", "text", "text2"))
 
+## ---- brands
+## color, brand, rrp, category(main/sub), releaseDate same for product of different sizes
+items %>% select(-size, -stock) %>% unique %>% glimpse
+items$pid %>% unique() %>% glimpse
+## 25 brands
+items %>% group_by(brand) %>% 
+  summarise(npid = length(unique(pid)), 
+            nitem = n(),
+            nstock = sum(stock),
+            medrrp = median(rrp[!duplicated(pid)]),
+            nmaincat = length(unique(mainCategory)),
+            ncat = length(unique(category)),
+            nsubcat = length(unique(subCategory)),
+            nnewrelease = length(unique(pid[releaseDate>ymd("2017-10-01")]))
+            ) %>% 
+  arrange(desc(npid)) -> brands
+str(brands)
+brandst <- data.frame(t(brands[,-1]))
+colnames(brandst) <- unlist(paste(brands$npid, brands$brand, sep = "-"))
+str(brandst)
+brands.cor <- cor(brandst)
+library(corrplot)
+corrplot(brands.cor, type = "upper")
+
+library(forcats)
+## rename brand by adding rank of # of stock
+items %>% mutate(brand = fct_reorder(brand, stock, sum)) %>%
+  mutate(rank = as.numeric(brand)) %>%
+  mutate(brand = paste(rank, brand, sep = "-")) -> items.brand
+## stock by brand, checking new names
+## first 12 brands with total stock less than 15
+ggplot(data = items.brand %>% mutate(brand = fct_reorder(brand, stock, sum))) +
+  ggtitle("stock on Feb 1st by brand") +
+  geom_boxplot(aes(x=brand, y=stock, color = brand)) + 
+  scale_y_log10() + theme_bw(base_size = 15) + guides(color = FALSE) +
+  theme(axis.text.x = element_text(angle = 45)) 
+## rrp by brand 
+## some brands are low-stock due to high price
+ggplot(data = items.brand %>% mutate(brand = fct_reorder(brand, rrp, median))) +
+  ggtitle("recommended retail price by brand") +
+  geom_boxplot(aes(x=brand, y=rrp, color = brand)) + 
+  theme_bw(base_size = 15) + guides(color = FALSE) +
+  theme(axis.text.x = element_text(angle = 45)) 
+## sales by brand during Oct-Jan
+## stock strongly positively correlated with sales
+ggplot(data = train %>% left_join(items.brand, by = c("pid", "size")) %>%
+         mutate(brand = fct_reorder(brand, units, sum))) + 
+  ggtitle("sales during Oct-Jan by brand") +
+  geom_boxplot(aes(x = brand, y = units, color = brand), alpha = 0.6) +
+  scale_y_log10() + theme_bw(base_size = 15) + guides(color = FALSE) +
+  theme(axis.text.x = element_text(angle = 45))

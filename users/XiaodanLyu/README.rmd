@@ -33,3 +33,7 @@ knitr::read_chunk('exploration.r')
 #### calendar plots
 ```{r calendar}
 ```
+
+#### brands
+```{r brands}
+```
