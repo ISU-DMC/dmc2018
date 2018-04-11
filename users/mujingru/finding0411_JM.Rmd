@@ -8,6 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
+##
 setwd("/Users/jingrumu/Documents/Spring2018/DataMiningCup2018/raw_data")
 library(data.table)
 items=fread("items.csv",header=T)
