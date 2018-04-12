@@ -12,28 +12,44 @@ knitr::opts_chunk$set(message = F, warning = F, fig.path = 'figures/')
 knitr::read_chunk('exploration.r')
 ```
 
-## My findings 
+# My findings 
 
-#### read data
+## Read Data
 ```{r input}
 ```
 
-#### data quality
+### data quality
 ```{r quality}
 ```
 
-#### dates at a glance
+## Dates
 ```{r dates}
 ```
 
-#### price & date
+### price & date
 ```{r prices}
 ```
 
-#### calendar plots
+### calendar plots
 ```{r calendar}
 ```
 
-#### brands
+## Brands
 ```{r brands}
+```
+
+## Prices Revisit
+```{r prices_again}
+```
+
+## Data Join
+```{r data_join}
+```
+
+### rising prices
+```{r rising_prices}
+```
+
+### best seller
+```{r best_seller, fig.height = 10}
 ```

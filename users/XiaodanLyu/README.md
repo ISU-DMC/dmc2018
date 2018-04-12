@@ -1,7 +1,8 @@
 My findings
------------
+===========
 
-#### read data
+Read Data
+---------
 
 ``` r
 library(sugrrants)
@@ -15,7 +16,7 @@ prices <- read.csv("data/raw_data/prices.csv", sep = "|")
 items <- read.csv("data/raw_data/items.csv", sep = "|")
 ```
 
-#### data quality
+### data quality
 
 ``` r
 ## no missing in training data
@@ -54,7 +55,8 @@ anti_join(items, prices, by = c("pid", "size")) %>% dim()
 
     ## [1]  0 10
 
-#### dates at a glance
+Dates
+-----
 
 ``` r
 ## sales data available everyday from 2017-10-01 to 2018-01-31
@@ -84,7 +86,7 @@ mean(items$releaseDate == ymd("2017-10-01"))
 
     ## [1] 0.849345
 
-#### price & date
+### price & date
 
 ``` r
 ## gather date and price by product ID and size
@@ -164,7 +166,7 @@ items %>% left_join(prices_long, by = c("pid", "size")) %>%
     ##  3rd Qu.:102.81  
     ##  Max.   :419.03
 
-#### calendar plots
+### calendar plots
 
 ``` r
 ## remarkably more sales on Black Friday 2017-11-24
@@ -198,7 +200,8 @@ prettify(p2.release, label = c("label", "text", "text2"))
 
 ![](figures/calendar-2.png)
 
-#### brands
+Brands
+------
 
 ``` r
 ## color, brand, rrp, category(main/sub), releaseDate same for product of different sizes
@@ -333,3 +336,221 @@ ggplot(data = train %>% left_join(items.brand, by = c("pid", "size")) %>%
 ```
 
 ![](figures/brands-4.png)
+
+Prices Revisit
+--------------
+
+``` r
+## same product has difference daily prices for different sizes
+prices_long %>% filter(pid == 16427, date == ymd("2017-10-01"))
+```
+
+    ##      pid   size       date  price
+    ## 1  16427 39 1/3 2017-10-01 100.87
+    ## 2  16427 40 2/3 2017-10-01  95.73
+    ## 3  16427 41 1/3 2017-10-01 102.08
+    ## 4  16427     42 2017-10-01  95.11
+    ## 5  16427 42 2/3 2017-10-01  94.15
+    ## 6  16427 43 1/3 2017-10-01  95.18
+    ## 7  16427     44 2017-10-01  95.78
+    ## 8  16427 44 2/3 2017-10-01  95.84
+    ## 9  16427 45 1/3 2017-10-01  95.14
+    ## 10 16427     46 2017-10-01  95.63
+    ## 11 16427 47 1/3 2017-10-01  95.61
+
+Data Join
+---------
+
+``` r
+## any sale before releaseDate? No
+left_join(prices_long, train, by = c("pid", "size", "date")) %>% 
+  left_join(items, by = c("pid", "size")) %>%
+  filter(date<releaseDate, !is.na(units)) %>% dim
+```
+
+    ## [1]  0 13
+
+``` r
+## joining three tables: items, prices, train
+## sale unit is zero if not appearing in the train data for a particular day
+## discount says how many percent off the rrp
+## diffprice says price differences from previous day
+## reldiffprice says how many percent down/up from previous day
+left_join(prices_long, train, by = c("pid", "size", "date")) %>% 
+  left_join(items, by = c("pid", "size")) %>%
+  filter(date>=releaseDate) %>% 
+  mutate(units = replace(units, is.na(units) & date < ymd("2018-02-01"), 0),
+         discount = (rrp-price)/rrp*100) %>% 
+  group_by(pid, size) %>% 
+  mutate(diffprice = price - lag(price)) %>%
+  mutate(reldiffprice = diffprice/lag(price)*100) -> alldata
+## all prices lower than rrp? Yes
+summary(alldata$discount)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##    0.00   20.00   25.01   23.63   33.07   80.04
+
+``` r
+## any rising prices? Yes
+summary(alldata$diffprice)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+    ## -89.980   0.000   0.000  -0.013   0.000  86.630   12824
+
+``` r
+summary(alldata$reldiffprice)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+    ## -49.987   0.000   0.000  -0.005   0.000  90.201   12824
+
+### rising prices
+
+``` r
+## only new released items may have a rising price 
+alldata %>% group_by(pid, size) %>% 
+  summarise(yn.priceincr = any(reldiffprice > 0, na.rm = T),
+            yn.newrelease = all(releaseDate > ymd("2017-10-01"))) %>%
+  ungroup -> check
+check %>% select(yn.priceincr, yn.newrelease) %>% table
+```
+
+    ##             yn.newrelease
+    ## yn.priceincr FALSE  TRUE
+    ##        FALSE 10892   222
+    ##        TRUE      0  1710
+
+### best seller
+
+``` r
+## bestseller among (pid, size)
+alldata %>% group_by(pid, size) %>% 
+  summarise(nsale = sum(units, na.rm = T)) %>% 
+  arrange(desc(nsale)) %>% head(1)
+```
+
+    ## # A tibble: 1 x 3
+    ## # Groups:   pid [1]
+    ##     pid   size nsale
+    ##   <int> <fctr> <dbl>
+    ## 1 12985      L  2979
+
+``` r
+## being sold everyday, prices never change, 40% off
+alldata %>% filter(pid == 12985, size == "L") %>% glimpse
+```
+
+    ## Observations: 151
+    ## Variables: 16
+    ## $ pid          <int> 12985, 12985, 12985, 12985, 12985, 12985, 12985, ...
+    ## $ size         <fctr> L, L, L, L, L, L, L, L, L, L, L, L, L, L, L, L, ...
+    ## $ date         <date> 2017-10-01, 2017-10-02, 2017-10-03, 2017-10-04, ...
+    ## $ price        <dbl> 28.91, 28.91, 28.91, 28.91, 28.91, 28.91, 28.91, ...
+    ## $ units        <dbl> 26, 20, 71, 37, 22, 13, 14, 28, 20, 20, 32, 16, 1...
+    ## $ color        <fctr> schwarz, schwarz, schwarz, schwarz, schwarz, sch...
+    ## $ brand        <fctr> adidas, adidas, adidas, adidas, adidas, adidas, ...
+    ## $ rrp          <dbl> 48.19, 48.19, 48.19, 48.19, 48.19, 48.19, 48.19, ...
+    ## $ mainCategory <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...
+    ## $ category     <int> 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7...
+    ## $ subCategory  <int> 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 1...
+    ## $ stock        <int> 101, 101, 101, 101, 101, 101, 101, 101, 101, 101,...
+    ## $ releaseDate  <date> 2017-10-01, 2017-10-01, 2017-10-01, 2017-10-01, ...
+    ## $ discount     <dbl> 40.0083, 40.0083, 40.0083, 40.0083, 40.0083, 40.0...
+    ## $ diffprice    <dbl> NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...
+    ## $ reldiffprice <dbl> NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...
+
+``` r
+## bestseller among which there is an increase in price
+alldata %>% group_by(pid, size) %>% 
+  filter(any(reldiffprice > 0)) %>% 
+  summarise(nsale = sum(units, na.rm = T)) %>% 
+  arrange(desc(nsale)) %>% head(1)
+```
+
+    ## # A tibble: 1 x 3
+    ## # Groups:   pid [1]
+    ##     pid   size nsale
+    ##   <int> <fctr> <dbl>
+    ## 1 20828      L   474
+
+``` r
+alldata %>% filter(pid == 20828, size == "L") %>% glimpse
+```
+
+    ## Observations: 105
+    ## Variables: 16
+    ## $ pid          <int> 20828, 20828, 20828, 20828, 20828, 20828, 20828, ...
+    ## $ size         <fctr> L, L, L, L, L, L, L, L, L, L, L, L, L, L, L, L, ...
+    ## $ date         <date> 2017-11-16, 2017-11-17, 2017-11-18, 2017-11-19, ...
+    ## $ price        <dbl> 27.97, 27.97, 27.97, 27.97, 27.97, 25.97, 25.97, ...
+    ## $ units        <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0...
+    ## $ color        <fctr> schwarz, schwarz, schwarz, schwarz, schwarz, sch...
+    ## $ brand        <fctr> adidas, adidas, adidas, adidas, adidas, adidas, ...
+    ## $ rrp          <dbl> 50.73, 50.73, 50.73, 50.73, 50.73, 50.73, 50.73, ...
+    ## $ mainCategory <int> 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 1...
+    ## $ category     <int> 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 1...
+    ## $ subCategory  <int> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N...
+    ## $ stock        <int> 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,...
+    ## $ releaseDate  <date> 2017-11-16, 2017-11-16, 2017-11-16, 2017-11-16, ...
+    ## $ discount     <dbl> 44.86497, 44.86497, 44.86497, 44.86497, 44.86497,...
+    ## $ diffprice    <dbl> NA, 0, 0, 0, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,...
+    ## $ reldiffprice <dbl> NA, 0.000000, 0.000000, 0.000000, 0.000000, -7.15...
+
+``` r
+## bestseller among which there is no discount all the time
+alldata %>% group_by(pid, size) %>% filter(all(discount == 0)) %>% 
+  summarise(nsale = sum(units, na.rm = T)) %>% 
+  arrange(desc(nsale)) %>% head(1)
+```
+
+    ## # A tibble: 1 x 3
+    ## # Groups:   pid [1]
+    ##     pid        size nsale
+    ##   <int>      <fctr> <dbl>
+    ## 1 22144 L ( 42-46 )  1044
+
+``` r
+alldata %>% filter(pid == 22144, size == "L ( 42-46 )") %>% glimpse
+```
+
+    ## Observations: 151
+    ## Variables: 16
+    ## $ pid          <int> 22144, 22144, 22144, 22144, 22144, 22144, 22144, ...
+    ## $ size         <fctr> L ( 42-46 ), L ( 42-46 ), L ( 42-46 ), L ( 42-46...
+    ## $ date         <date> 2017-10-01, 2017-10-02, 2017-10-03, 2017-10-04, ...
+    ## $ price        <dbl> 10.09, 10.09, 10.09, 10.09, 10.09, 10.09, 10.09, ...
+    ## $ units        <dbl> 4, 4, 143, 27, 3, 0, 2, 7, 0, 6, 0, 3, 2, 2, 2, 4...
+    ## $ color        <fctr> schwarz, schwarz, schwarz, schwarz, schwarz, sch...
+    ## $ brand        <fctr> Sport2000, Sport2000, Sport2000, Sport2000, Spor...
+    ## $ rrp          <dbl> 10.09, 10.09, 10.09, 10.09, 10.09, 10.09, 10.09, ...
+    ## $ mainCategory <int> 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9...
+    ## $ category     <int> 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 1...
+    ## $ subCategory  <int> 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 1...
+    ## $ stock        <int> 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 3...
+    ## $ releaseDate  <date> 2017-10-01, 2017-10-01, 2017-10-01, 2017-10-01, ...
+    ## $ discount     <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0...
+    ## $ diffprice    <dbl> NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...
+    ## $ reldiffprice <dbl> NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...
+
+``` r
+itemsofinterest <- data.frame(
+  label = c("bestseller", "bestseller - rising price", "bestseller - no discount"),
+  pid = c(12985, 20828, 22144), size = c("L", "L", "L ( 42-46 )"))
+alldata %>% inner_join(itemsofinterest, by = c("pid", "size")) -> plotdata
+## time series plot
+plotdata %>% group_by(pid, size) %>% mutate(avg.discount = mean(discount)) %>% ungroup %>%
+  ggplot(aes(x = date)) + 
+  geom_line(aes(y = units, color = "daily sale (unit)")) +
+  geom_line(aes(y = reldiffprice, color = "daily price change (%)")) +
+  geom_label(aes(x = max(date), y = max(units, na.rm = T),
+                 label = sprintf("brand: %s, rrp: %.2f, %.0f%% off", brand, rrp, avg.discount)),
+             hjust = 1, vjust = 1, size = 5, fontface = "bold") +
+  scale_x_date(limits = c(ymd("2017-10-01"), ymd("2018-02-28"))) + 
+  labs(x = "date", y = "", color = "") +
+  theme_bw(base_size = 15) + theme(legend.position = "bottom") +
+  facet_wrap(~label, nrow = 3)
+```
+
+![](figures/best_seller-1.png)

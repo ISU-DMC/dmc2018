@@ -101,7 +101,6 @@ str(brandst)
 brands.cor <- cor(brandst)
 corrplot(brands.cor, type = "upper", order = "hclust")
 
-
 ## rename brand by adding rank of # of stock
 items %>% mutate(brand = fct_reorder(brand, stock, sum)) %>%
   mutate(rank = as.numeric(brand)) %>%
@@ -129,6 +128,75 @@ ggplot(data = train %>% left_join(items.brand, by = c("pid", "size")) %>%
   scale_y_log10() + theme_bw(base_size = 15) + guides(color = FALSE) +
   theme(axis.text.x = element_text(angle = 45))
 
-## ---- prices again
-## same product may have difference daily prices for different sizes
+## ---- prices_again
+## same product has difference daily prices for different sizes
 prices_long %>% filter(pid == 16427, date == ymd("2017-10-01"))
+
+## ---- data_join
+## any sale before releaseDate? No
+left_join(prices_long, train, by = c("pid", "size", "date")) %>% 
+  left_join(items, by = c("pid", "size")) %>%
+  filter(date<releaseDate, !is.na(units)) %>% dim
+## joining three tables: items, prices, train
+## sale unit is zero if not appearing in the train data for a particular day
+## discount says how many percent off the rrp
+## diffprice says price differences from previous day
+## reldiffprice says how many percent down/up from previous day
+left_join(prices_long, train, by = c("pid", "size", "date")) %>% 
+  left_join(items, by = c("pid", "size")) %>%
+  filter(date>=releaseDate) %>% 
+  mutate(units = replace(units, is.na(units) & date < ymd("2018-02-01"), 0),
+         discount = (rrp-price)/rrp*100) %>% 
+  group_by(pid, size) %>% 
+  mutate(diffprice = price - lag(price)) %>%
+  mutate(reldiffprice = diffprice/lag(price)*100) -> alldata
+## all prices lower than rrp? Yes
+summary(alldata$discount)
+## any rising prices? Yes
+summary(alldata$diffprice)
+summary(alldata$reldiffprice)
+
+## ---- rising_prices
+## only new released items may have a rising price 
+alldata %>% group_by(pid, size) %>% 
+  summarise(yn.priceincr = any(reldiffprice > 0, na.rm = T),
+            yn.newrelease = all(releaseDate > ymd("2017-10-01"))) %>%
+  ungroup -> check
+check %>% select(yn.priceincr, yn.newrelease) %>% table
+
+## ---- best_seller
+## bestseller among (pid, size)
+alldata %>% group_by(pid, size) %>% 
+  summarise(nsale = sum(units, na.rm = T)) %>% 
+  arrange(desc(nsale)) %>% head(1)
+## being sold everyday, prices never change, 40% off
+alldata %>% filter(pid == 12985, size == "L") %>% glimpse
+## bestseller among which there is an increase in price
+alldata %>% group_by(pid, size) %>% 
+  filter(any(reldiffprice > 0)) %>% 
+  summarise(nsale = sum(units, na.rm = T)) %>% 
+  arrange(desc(nsale)) %>% head(1)
+alldata %>% filter(pid == 20828, size == "L") %>% glimpse
+## bestseller among which there is no discount all the time
+alldata %>% group_by(pid, size) %>% filter(all(discount == 0)) %>% 
+  summarise(nsale = sum(units, na.rm = T)) %>% 
+  arrange(desc(nsale)) %>% head(1)
+alldata %>% filter(pid == 22144, size == "L ( 42-46 )") %>% glimpse
+
+itemsofinterest <- data.frame(
+  label = c("bestseller", "bestseller - rising price", "bestseller - no discount"),
+  pid = c(12985, 20828, 22144), size = c("L", "L", "L ( 42-46 )"))
+alldata %>% inner_join(itemsofinterest, by = c("pid", "size")) -> plotdata
+## time series plot
+plotdata %>% group_by(pid, size) %>% mutate(avg.discount = mean(discount)) %>% ungroup %>%
+  ggplot(aes(x = date)) + 
+  geom_line(aes(y = units, color = "daily sale (unit)")) +
+  geom_line(aes(y = reldiffprice, color = "daily price change (%)")) +
+  geom_label(aes(x = max(date), y = max(units, na.rm = T),
+                 label = sprintf("brand: %s, rrp: %.2f, %.0f%% off", brand, rrp, avg.discount)),
+             hjust = 1, vjust = 1, size = 5, fontface = "bold") +
+  scale_x_date(limits = c(ymd("2017-10-01"), ymd("2018-02-28"))) + 
+  labs(x = "date", y = "", color = "") +
+  theme_bw(base_size = 15) + theme(legend.position = "bottom") +
+  facet_wrap(~label, nrow = 3)
+
