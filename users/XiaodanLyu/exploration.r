@@ -170,24 +170,25 @@ alldata %>% group_by(pid, size) %>%
   summarise(nsale = sum(units, na.rm = T)) %>% 
   arrange(desc(nsale)) %>% head(1)
 ## being sold everyday, prices never change, 40% off
-alldata %>% filter(pid == 12985, size == "L") %>% glimpse
+alldata %>% filter(pid == 12985, size == "L") %>% arrange(desc(units)) %>% head(10)
 ## bestseller among which there is an increase in price
 alldata %>% group_by(pid, size) %>% 
   filter(any(reldiffprice > 0)) %>% 
   summarise(nsale = sum(units, na.rm = T)) %>% 
   arrange(desc(nsale)) %>% head(1)
-alldata %>% filter(pid == 20828, size == "L") %>% glimpse
+alldata %>% filter(pid == 20828, size == "L") %>% arrange(desc(abs(reldiffprice))) %>% head(10)
 ## bestseller among which there is no discount all the time
 alldata %>% group_by(pid, size) %>% filter(all(discount == 0)) %>% 
   summarise(nsale = sum(units, na.rm = T)) %>% 
   arrange(desc(nsale)) %>% head(1)
-alldata %>% filter(pid == 22144, size == "L ( 42-46 )") %>% glimpse
+alldata %>% filter(pid == 22144, size == "L ( 42-46 )") %>% arrange(desc(units)) %>% head(10)
 
 itemsofinterest <- data.frame(
   label = c("bestseller", "bestseller - rising price", "bestseller - no discount"),
   pid = c(12985, 20828, 22144), size = c("L", "L", "L ( 42-46 )"))
 alldata %>% inner_join(itemsofinterest, by = c("pid", "size")) -> plotdata
 ## time series plot
+## holiday reference: www.timeanddate.com/holidays/germany/2017
 plotdata %>% group_by(pid, size) %>% mutate(avg.discount = mean(discount)) %>% ungroup %>%
   ggplot(aes(x = date)) + 
   geom_line(aes(y = units, color = "daily sale (unit)")) +
@@ -195,6 +196,9 @@ plotdata %>% group_by(pid, size) %>% mutate(avg.discount = mean(discount)) %>% u
   geom_label(aes(x = max(date), y = max(units, na.rm = T),
                  label = sprintf("brand: %s, rrp: %.2f, %.0f%% off", brand, rrp, avg.discount)),
              hjust = 1, vjust = 1, size = 5, fontface = "bold") +
+  geom_vline(aes(color = "NH - German Unity", xintercept = ymd("2017-10-03")), show.legend = T) +
+  geom_vline(aes(color = "NH - Reformation Day", xintercept = ymd("2017-10-31")), show.legend = T) +
+  geom_vline(aes(color = "NH - Black Friday", xintercept = ymd("2017-11-24")), show.legend = T) +
   scale_x_date(limits = c(ymd("2017-10-01"), ymd("2018-02-28"))) + 
   labs(x = "date", y = "", color = "") +
   theme_bw(base_size = 15) + theme(legend.position = "bottom") +

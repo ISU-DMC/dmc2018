@@ -51,5 +51,5 @@ knitr::read_chunk('exploration.r')
 ```
 
 ### best seller
-```{r best_seller, fig.height = 10}
+```{r best_seller, fig.height = 10, fig.width=10}
 ```
