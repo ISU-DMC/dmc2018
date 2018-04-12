@@ -7,3 +7,5 @@
 ### As of now, duplication and missing values are (perhaps partly) dealt with, with no data deleted.
 ### What're remaining is the interpretation of the werid datasets and creating new features.
 ### Will do it later.
+# 20180412
+### The way I read in the datasets was wrong. Changes will be made by Friday.
