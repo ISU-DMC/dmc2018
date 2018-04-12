@@ -1,0 +1,68 @@
+ ### Size
+ - Special sizes: Under Armour products for kids
+ - Group and rename the sizes into one unqiue (XS, L, Shoes sizes)
+ - Product is the new size 
+
+### Category
+ - Stock vs Category: picks (y loged)
+ - Mean price vs mean stock : relationship ???
+ - Price is usually less than RRP
+ - 
+
+
+### Main Category 
+ - Three main categories : Professional, Casual .. ?
+ >>> Men , women, kids
+ >>> Subcategory: Soccer, Running, .. etc
+ >>> Last product, for instance: Nike L, Nike S .. etc (will be form the same category tree)
+
+
+### Black Friday ??? 
+
+### New variable 
+- By date: weekday
+- Variable: on how special the day is (Bayesian or indicator?)
+- Waiting time(in days) - how many days should we wait to the product sell out (as target)
+(jump days from sale to sale ~ for each quantity)
+
+
+### Color
+- stock by color
+- rrp by color
+- 
+
+
+
+Kanak:
+
+### Target variable ??? - Last date stock == 0
+- 1. Binary variable: sold not sold (but how many were sold on that day?)
+- 2. ?
+
+
+### Combined data becomes 2000000 ??? 
+- for each product: day vs price
+- 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
