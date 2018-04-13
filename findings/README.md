@@ -20,7 +20,7 @@
 | [yuchenw2015](https://github.com/yuchenw2015) | |
 | [yudizhangzyd](https://github.com/yudizhangzyd) | |
 | [feilittle](https://github.com/feilittle) | |
-| [XiaodanLyu](https://github.com/XiaodanLyu) | |
+| [XiaodanLyu](https://github.com/XiaodanLyu) | Only the products released after 2017-10-01 (around 15%) may have changing prices. |
 | [YushanGu](https://github.com/YushanGu) | |
 | [kgulzina](https://github.com/kgulzina) | |
 | [zzj8222090](https://github.com/zzj8222090) | |
