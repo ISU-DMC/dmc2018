@@ -6,3 +6,7 @@
 data combination in combine.R
 
 Frequency summary for category, maincategory and subcategory, boxplot of rrp for category in category.pdf
+
+4/13
+
+Accumulative sale units for each category
