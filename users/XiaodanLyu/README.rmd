@@ -14,39 +14,33 @@ knitr::read_chunk('exploration.r')
 
 # My findings 
 
-## Read Data
+## read data
 ```{r input}
 ```
 
-### data quality
-```{r quality}
+## items
+```{r items}
 ```
 
-## Dates
-```{r dates}
+## train
+```{r train}
 ```
 
-### price & date
+## prices
 ```{r prices}
 ```
 
-### calendar plots
+## calendar
 ```{r calendar}
 ```
 
-## Brands
-```{r brands}
-```
-
-## Prices Revisit
-```{r prices_again}
-```
-
-## Data Join
+## data join
 ```{r data_join}
 ```
 
-### rising prices
+## brands
+```{r brands}
+```
 ```{r rising_prices}
 ```
 
