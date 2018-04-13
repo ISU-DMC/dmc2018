@@ -43,6 +43,8 @@ knitr::read_chunk('exploration.r')
 ```
 ```{r rising_prices}
 ```
+```{r nike&adidas, fig.height = 10}
+```
 
 ### best seller
 ```{r best_seller, fig.height = 10, fig.width=10}

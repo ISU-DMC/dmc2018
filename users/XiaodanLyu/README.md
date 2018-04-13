@@ -14,6 +14,7 @@ library(corrplot)
 train <- read.csv("../../data/raw_data/train.csv", sep = "|", stringsAsFactors = F)
 prices <- read.csv("../../data/raw_data/prices.csv", sep = "|", stringsAsFactors = F)
 items <- read.csv("../../data/raw_data/items.csv", sep = "|", stringsAsFactors = F)
+items <- items %>% mutate_at(vars(mainCategory:subCategory), funs(factor))
 ## Q: set of keys the same for the three data sets? Yes
 key.items <- paste(items$pid, items$size, sep = " & ") 
 key.train <- paste(train$pid, train$size, sep = " & ") %>% unique
@@ -60,9 +61,9 @@ items %>% select(-size, -stock) %>% unique %>% glimpse
     ## $ color        <chr> "gruen", "schwarz", "weiss", "blau", "blau", "sch...
     ## $ brand        <chr> "Nike", "Jako", "Jako", "Under Armour", "PUMA", "...
     ## $ rrp          <dbl> 25.33, 38.03, 12.63, 57.08, 25.33, 69.78, 25.33, ...
-    ## $ mainCategory <int> 1, 1, 1, 15, 1, 1, 1, 15, 9, 1, 9, 9, 1, 9, 1, 1,...
-    ## $ category     <int> 7, 7, 7, 24, 7, 7, 7, 33, 10, 7, 10, 18, 7, 18, 3...
-    ## $ subCategory  <int> 25, 16, 13, NA, 8, 16, 8, NA, 14, 31, 35, 32, 22,...
+    ## $ mainCategory <fctr> 1, 1, 1, 15, 1, 1, 1, 15, 9, 1, 9, 9, 1, 9, 1, 1...
+    ## $ category     <fctr> 7, 7, 7, 24, 7, 7, 7, 33, 10, 7, 10, 18, 7, 18, ...
+    ## $ subCategory  <fctr> 25, 16, 13, NA, 8, 16, 8, NA, 14, 31, 35, 32, 22...
     ## $ releaseDate  <chr> "2017-10-01", "2017-10-01", "2017-10-01", "2017-1...
 
 ``` r
@@ -359,6 +360,43 @@ ggplot(data = train %>% left_join(items.brand, by = c("pid", "size")) %>%
 ![](figures/brands-3.png)
 
 ``` r
+## category by brand
+items.brand %>% group_by(no.brand, mainCategory) %>% tally %>% ungroup %>%
+  mutate(no.brand = fct_reorder(no.brand, n, sum),
+         mainCategory = fct_relevel(factor(mainCategory), 15, 9, 1)) %>%
+  ggplot(aes(x = no.brand, y = n, fill = mainCategory)) +
+  geom_bar(stat = "identity") + scale_y_sqrt() +
+  scale_fill_brewer(palette = "Dark2") +
+  theme_bw(base_size = 15) +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+![](figures/brands-4.png)
+
+``` r
+items.brand %>% group_by(no.brand, category) %>% tally %>% ungroup %>%
+  mutate(no.brand = fct_reorder(no.brand, n, sum)) %>%
+  ggplot(aes(x = no.brand, y = n, fill = category)) +
+  geom_bar(stat = "identity") + scale_y_sqrt() +
+  theme_bw(base_size = 15) +
+  scale_fill_brewer(palette = "Paired") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+![](figures/brands-5.png)
+
+``` r
+items.brand %>% group_by(no.brand, subCategory) %>% tally %>% ungroup %>%
+  mutate(no.brand = fct_reorder(no.brand, n, sum)) %>%
+  ggplot(aes(x = no.brand, y = n, fill = subCategory)) +
+  geom_bar(stat = "identity") + scale_y_sqrt() +
+  theme_bw(base_size = 15) +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+![](figures/brands-6.png)
+
+``` r
 alldata %>% group_by(pid, size, brand) %>% 
   summarise(yn.priceincr = any(reldiffprice > 0, na.rm = T),
             yn.newrelease = any(releaseDate > ymd("2017-10-01")),
@@ -406,7 +444,26 @@ brands.item.price %>% select(nanyincr:no.brand) %>%
 ![](figures/rising_prices-1.png)
 
 ``` r
-## Q: similarities among brands?
+## competing brands: nike and adidas
+items %>% filter(releaseDate > ymd("2017-10-01"), brand %in% c("Nike", "adidas")) %>%
+  group_by(releaseDate, brand) %>% tally() %>% ungroup %>% 
+  left_join(brands %>% select(brand, no.brand), by = "brand") %>%
+  mutate(no.brand = fct_reorder(no.brand, n, sum, .desc = TRUE),
+         month = paste(year(releaseDate), month(releaseDate), sep = "-"),
+         week = ceiling(day(releaseDate)/7),
+         wday = wday(releaseDate)) %>% 
+  ggplot(aes(x = releaseDate, y = n, fill= no.brand)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  # scale_x_discrete(labels = )
+  facet_wrap(~month, scales = "free_x", nrow = 4) +
+  labs(y = "# of released products", fill = "") +
+  theme_bw(base_size = 15)
+```
+
+![](figures/nike&adidas-1.png)
+
+``` r
+## Q: similarities among brands? brand type
 train %>% left_join(items %>% select(pid, size, brand), by = c("pid", "size")) %>%
   group_by(brand) %>% summarise(nsale = sum(units)) %>% ungroup %>%
   left_join(brands.item.price, by = "brand") -> brands.all
@@ -443,13 +500,13 @@ brands.cor <- cor(brandst)
 corrplot(brands.cor, type = "upper", order = "FPC")
 ```
 
-![](figures/rising_prices-2.png)
+![](figures/nike&adidas-2.png)
 
 ``` r
 corrplot(brands.cor, type = "full", order = "hclust", addrect = 13)
 ```
 
-![](figures/rising_prices-3.png)
+![](figures/nike&adidas-3.png)
 
 ### best seller
 
@@ -474,7 +531,7 @@ alldata %>% filter(pid == 12985, size == "L") %>% arrange(desc(units)) %>% head(
     ## # A tibble: 10 x 16
     ## # Groups:   pid, size [1]
     ##      pid  size       date price units   color  brand   rrp mainCategory
-    ##    <int> <chr>     <date> <dbl> <dbl>   <chr>  <chr> <dbl>        <int>
+    ##    <int> <chr>     <date> <dbl> <dbl>   <chr>  <chr> <dbl>       <fctr>
     ##  1 12985     L 2017-11-24 28.91   129 schwarz adidas 48.19            1
     ##  2 12985     L 2017-11-26 28.91    94 schwarz adidas 48.19            1
     ##  3 12985     L 2018-01-31 28.91    82 schwarz adidas 48.19            1
@@ -485,7 +542,7 @@ alldata %>% filter(pid == 12985, size == "L") %>% arrange(desc(units)) %>% head(
     ##  8 12985     L 2018-01-24 28.91    49 schwarz adidas 48.19            1
     ##  9 12985     L 2018-01-30 28.91    47 schwarz adidas 48.19            1
     ## 10 12985     L 2018-01-11 28.91    45 schwarz adidas 48.19            1
-    ## # ... with 7 more variables: category <int>, subCategory <int>,
+    ## # ... with 7 more variables: category <fctr>, subCategory <fctr>,
     ## #   stock <int>, releaseDate <date>, discount <dbl>, diffprice <dbl>,
     ## #   reldiffprice <dbl>
 
@@ -510,7 +567,7 @@ alldata %>% filter(pid == 20828, size == "L") %>% arrange(desc(abs(reldiffprice)
     ## # A tibble: 10 x 16
     ## # Groups:   pid, size [1]
     ##      pid  size       date price units   color  brand   rrp mainCategory
-    ##    <int> <chr>     <date> <dbl> <dbl>   <chr>  <chr> <dbl>        <int>
+    ##    <int> <chr>     <date> <dbl> <dbl>   <chr>  <chr> <dbl>       <fctr>
     ##  1 20828     L 2017-12-11 25.97    19 schwarz adidas 50.73           15
     ##  2 20828     L 2017-12-15 25.97     4 schwarz adidas 50.73           15
     ##  3 20828     L 2018-01-24 25.97    21 schwarz adidas 50.73           15
@@ -521,7 +578,7 @@ alldata %>% filter(pid == 20828, size == "L") %>% arrange(desc(abs(reldiffprice)
     ##  8 20828     L 2017-12-24 23.97     2 schwarz adidas 50.73           15
     ##  9 20828     L 2018-01-08 23.97     9 schwarz adidas 50.73           15
     ## 10 20828     L 2018-02-11 23.97    NA schwarz adidas 50.73           15
-    ## # ... with 7 more variables: category <int>, subCategory <int>,
+    ## # ... with 7 more variables: category <fctr>, subCategory <fctr>,
     ## #   stock <int>, releaseDate <date>, discount <dbl>, diffprice <dbl>,
     ## #   reldiffprice <dbl>
 
@@ -556,8 +613,8 @@ alldata %>% filter(pid == 22144, size == "L ( 42-46 )") %>% arrange(desc(units))
     ##  8 22144 L ( 42-46 ) 2017-10-04 10.09    27 schwarz Sport2000 10.09
     ##  9 22144 L ( 42-46 ) 2017-11-01 10.09    24 schwarz Sport2000 10.09
     ## 10 22144 L ( 42-46 ) 2017-10-30 10.09    23 schwarz Sport2000 10.09
-    ## # ... with 8 more variables: mainCategory <int>, category <int>,
-    ## #   subCategory <int>, stock <int>, releaseDate <date>, discount <dbl>,
+    ## # ... with 8 more variables: mainCategory <fctr>, category <fctr>,
+    ## #   subCategory <fctr>, stock <int>, releaseDate <date>, discount <dbl>,
     ## #   diffprice <dbl>, reldiffprice <dbl>
 
 ``` r
