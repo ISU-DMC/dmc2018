@@ -1,17 +1,21 @@
 ---
 title: "Prices Dataset Exploration"
+author: Shan Yu
+date: Sys.Date()
 output:
-  html_document:
-    df_print: paged
+  md_document:
+    variant: markdown_github
 ---
 ```{r echo=FALSE,warning=FALSE,message=FALSE,error=FALSE}
 library(sugrrants)
 library(tidyverse)
 library(lubridate)
+library(plotly)
 setwd("~/Dropbox/DMC")
 train <- read.csv("raw_data/train.csv", sep = "|")
 prices <- read.csv("raw_data/prices.csv", sep = "|")
 items <- read.csv("raw_data/items.csv", sep = "|")
+Sale=read.csv("sale.csv")
 ```
 There are no missing data in train.
 ```{r,warning=FALSE,message=FALSE,error=FALSE}
@@ -32,9 +36,69 @@ unique(date) %>% length()
 ```
 For the majority of the items, the prices are kept the same over the time. The prices tends to change more in the February (to sold out).
 ```{r,warning=FALSE,message=FALSE,error=FALSE}
-f=function(x) length(unique(x))
+f=function(x) length(unique(x[!is.na(x)]))
 # check the price change in from 2017-10-01 to 2018-01-31
 table(apply(prices[,3:125],1,f))
 # check the price change in from 2017-10-01 to 2018-02-28
 table(apply(prices[,3:153],1,f))
+```
+## Daily Price and Daily Sale
+Here we explore influence of price on the daily sale (only consider each (pid size) with price change, 1473 in total). By calculate the correlation, we could find out most of them are negative correlated.
+```{r,warning=FALSE,message=FALSE,error=FALSE}
+ItemPrice=left_join(items,prices, by = c("pid", "size"))
+PP=ItemPrice[,11:161]/ItemPrice[,5]
+PP1=PP[,1:123]
+Change=apply(PP1,1,f)
+relation=NULL
+for (iter in which(Change>1)){
+  tt=which(!is.na(PP1[iter,]))
+  relation=c(relation,cor(t(PP1[iter,tt]),t(Sale[iter,tt+2])))
+}
+# density plot of correlation
+plot(density(relation),main='Correlation between daily price and daily sale')
+# high negative correlated
+x=1:151
+id=649
+daily_sale=t(Sale[id,-(1:2)])
+daily_price=t(PP[id,])*max(daily_sale)
+data=data.frame(x,daily_sale,daily_price)
+colnames(data)=c('x','daily_sale','daily_price')
+p <- plot_ly(data, x=~x, y=~daily_sale,name='Sale',type='scatter',mode='lines+markers') %>%
+  add_trace(y=~daily_price, name='price', mode='lines+markers')
+p  
+# midden negative correlated
+x=1:151
+id=887
+daily_sale=t(Sale[id,-(1:2)])
+daily_price=t(PP[id,])*max(daily_sale)
+data=data.frame(x,daily_sale,daily_price)
+colnames(data)=c('x','daily_sale','daily_price')
+p <- plot_ly(data, x=~x, y=~daily_sale,name='Sale',type='scatter',mode='lines+markers') %>%
+  add_trace(y=~daily_price, name='price', mode='lines+markers')
+p  
+# low negative correlated
+x=1:151
+id=8942
+daily_sale=t(Sale[id,-(1:2)])
+daily_price=t(PP[id,])*max(daily_sale)
+data=data.frame(x,daily_sale,daily_price)
+colnames(data)=c('x','daily_sale','daily_price')
+p <- plot_ly(data, x=~x, y=~daily_sale,name='Sale',type='scatter',mode='lines+markers') %>%
+  add_trace(y=~daily_price, name='price', mode='lines+markers')
+p 
+# positive correlated
+x=1:151
+id=6696
+daily_sale=t(Sale[id,-(1:2)])
+daily_price=t(PP[id,])*max(daily_sale)
+data=data.frame(x,daily_sale,daily_price)
+colnames(data)=c('x','daily_sale','daily_price')
+p <- plot_ly(data, x=~x, y=~daily_sale,name='Sale',type='scatter',mode='lines+markers') %>%
+  add_trace(y=~daily_price, name='price', mode='lines+markers')
+p 
+```
+# Stock size
+Notice: there are 7616 (pid size) only having one stock.
+```{r,warning=FALSE,message=FALSE,error=FALSE}
+plot(table(items$stock),xlab='frequency')
 ```

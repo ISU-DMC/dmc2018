@@ -1,0 +1,33 @@
+---
+title: "Findings"
+author: Shan Yu
+date: Sys.Date()
+output:
+  md_document:
+    variant: markdown_github
+---
+
+```{r external-code, cashe=FALSE, echo=FALSE}
+knitr::opts_chunk$set(message = F, warning = F, fig.path = 'figures/')
+knitr::read_chunk('Data_Explore.R')
+```
+
+# My findings 
+
+## read data
+```{r read_data}
+```
+
+## Price Changes
+123 dates in the first 4 months. 
+```{r prices_change}
+```
+
+## Daily Price and Daily Sale
+123 dates in the first 4 months. 
+```{r correlation}
+```
+
+## Stock
+```{r stock_size}
+```
