@@ -18,7 +18,7 @@
 | [wangyan-iastate](https://github.com/wangyan-iastate) | |
 | [weijiaweijia](https://github.com/weijiaweijia) | |
 | [yuchenw2015](https://github.com/yuchenw2015) | |
-| [yudizhangzyd](https://github.com/yudizhangzyd) | |
+| [yudizhangzyd](https://github.com/yudizhangzyd) | Maincategory 15 doesn't have subcategory, only category 37 belongs to both maincategory 1 and 9, the rest categories all belong to one maincategory. |
 | [feilittle](https://github.com/feilittle) | |
 | [XiaodanLyu](https://github.com/XiaodanLyu) | Only the products released after 2017-10-01 (around 15%) may have changing prices. |
 | [YushanGu](https://github.com/YushanGu) | |
