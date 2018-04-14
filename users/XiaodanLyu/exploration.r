@@ -8,6 +8,7 @@ library(corrplot)
 train <- read.csv("../../data/raw_data/train.csv", sep = "|", stringsAsFactors = F)
 prices <- read.csv("../../data/raw_data/prices.csv", sep = "|", stringsAsFactors = F)
 items <- read.csv("../../data/raw_data/items.csv", sep = "|", stringsAsFactors = F)
+items <- items %>% mutate_at(vars(mainCategory:subCategory), funs(factor))
 ## Q: set of keys the same for the three data sets? Yes
 key.items <- paste(items$pid, items$size, sep = " & ") 
 key.train <- paste(train$pid, train$size, sep = " & ") %>% unique
@@ -161,6 +162,28 @@ ggplot(data = train %>% left_join(items.brand, by = c("pid", "size")) %>%
   geom_boxplot(aes(x = no.brand, y = units, color = no.brand), alpha = 0.6) +
   scale_y_log10() + theme_bw(base_size = 15) + guides(color = FALSE) +
   theme(axis.text.x = element_text(angle = 45))
+## category by brand
+items.brand %>% group_by(no.brand, mainCategory) %>% tally %>% ungroup %>%
+  mutate(no.brand = fct_reorder(no.brand, n, sum),
+         mainCategory = fct_relevel(factor(mainCategory), 15, 9, 1)) %>%
+  ggplot(aes(x = no.brand, y = n, fill = mainCategory)) +
+  geom_bar(stat = "identity") + scale_y_sqrt() +
+  scale_fill_brewer(palette = "Dark2") +
+  theme_bw(base_size = 15) +
+  theme(axis.text.x = element_text(angle = 45))
+items.brand %>% group_by(no.brand, category) %>% tally %>% ungroup %>%
+  mutate(no.brand = fct_reorder(no.brand, n, sum)) %>%
+  ggplot(aes(x = no.brand, y = n, fill = category)) +
+  geom_bar(stat = "identity") + scale_y_sqrt() +
+  theme_bw(base_size = 15) +
+  scale_fill_brewer(palette = "Paired") +
+  theme(axis.text.x = element_text(angle = 45))
+items.brand %>% group_by(no.brand, subCategory) %>% tally %>% ungroup %>%
+  mutate(no.brand = fct_reorder(no.brand, n, sum)) %>%
+  ggplot(aes(x = no.brand, y = n, fill = subCategory)) +
+  geom_bar(stat = "identity") + scale_y_sqrt() +
+  theme_bw(base_size = 15) +
+  theme(axis.text.x = element_text(angle = 45))
 
 ## ---- rising_prices
 alldata %>% group_by(pid, size, brand) %>% 
@@ -190,7 +213,23 @@ brands.item.price %>% select(nanyincr:no.brand) %>%
   labs(title = "# of new released products by brand", fill = "") + 
   theme_bw(base_size = 15) + theme(axis.text.x = element_text(angle = 45)) 
 
-## Q: similarities among brands?
+## ---- nike&adidas
+## competing brands: nike and adidas
+items %>% filter(releaseDate > ymd("2017-10-01"), brand %in% c("Nike", "adidas")) %>%
+  group_by(releaseDate, brand) %>% tally() %>% ungroup %>% 
+  left_join(brands %>% select(brand, no.brand), by = "brand") %>%
+  mutate(no.brand = fct_reorder(no.brand, n, sum, .desc = TRUE),
+         month = paste(year(releaseDate), month(releaseDate), sep = "-"),
+         week = ceiling(day(releaseDate)/7),
+         wday = wday(releaseDate)) %>% 
+  ggplot(aes(x = releaseDate, y = n, fill= no.brand)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  # scale_x_discrete(labels = )
+  facet_wrap(~month, scales = "free_x", nrow = 4) +
+  labs(y = "# of released products", fill = "") +
+  theme_bw(base_size = 15)
+
+## Q: similarities among brands? brand type
 train %>% left_join(items %>% select(pid, size, brand), by = c("pid", "size")) %>%
   group_by(brand) %>% summarise(nsale = sum(units)) %>% ungroup %>%
   left_join(brands.item.price, by = "brand") -> brands.all
