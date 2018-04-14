@@ -47,3 +47,4 @@ eggs/
 .env
 .Rproj.user
 *.pkl
+findings/README.html
