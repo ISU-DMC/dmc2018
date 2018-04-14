@@ -41,11 +41,19 @@ knitr::read_chunk('exploration.r')
 ## brands
 ```{r brands}
 ```
+```{r category_brand, fig.height=8}
+```
+```{r subcategory_brand, fig.height=10}
+```
 ```{r rising_prices}
 ```
 ```{r nike&adidas, fig.height = 10}
 ```
 
 ### best seller
-```{r best_seller, fig.height = 10, fig.width=10}
+```{r best_seller, fig.height = 10}
+```
+
+### stock on Feb 1st
+```{r stock}
 ```

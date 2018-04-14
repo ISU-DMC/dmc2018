@@ -291,7 +291,7 @@ brands
 ## 25 brands
 items %>% group_by(brand) %>% 
   summarise(npid = length(unique(pid)), 
-            # nitem = n(),
+            nitem = n(),
             nstock = sum(stock),
             nsize = length(unique(size)),
             ncolor = length(unique(color)),
@@ -310,10 +310,11 @@ brands %>% arrange(desc(npid)) %>% glimpse
 ```
 
     ## Observations: 25
-    ## Variables: 12
+    ## Variables: 13
     ## $ brand       <fctr> Nike, adidas, PUMA, Jako, Uhlsport, Erima, Jordan...
     ## $ no.brand    <chr> "25-Nike", "24-adidas", "23-PUMA", "22-Jako", "16-...
     ## $ npid        <int> 2126, 1277, 389, 377, 91, 81, 76, 75, 69, 49, 47, ...
+    ## $ nitem       <int> 6389, 3969, 772, 673, 126, 107, 136, 135, 95, 123,...
     ## $ nstock      <int> 25024, 15272, 1735, 1396, 188, 242, 199, 275, 136,...
     ## $ nsize       <int> 53, 61, 42, 50, 17, 32, 16, 21, 18, 25, 16, 19, 19...
     ## $ ncolor      <int> 17, 16, 15, 10, 10, 7, 7, 9, 8, 9, 9, 7, 4, 3, 4, ...
@@ -368,7 +369,7 @@ items.brand %>% group_by(no.brand, mainCategory) %>% tally %>% ungroup %>%
   mutate(no.brand = fct_reorder(no.brand, n, sum),
          mainCategory = fct_relevel(factor(mainCategory), 15, 9, 1)) %>%
   ggplot(aes(x = no.brand, y = n, fill = mainCategory)) +
-  geom_bar(stat = "identity") + scale_y_sqrt() +
+  geom_bar(stat = "identity") + 
   scale_fill_brewer(palette = "Dark2") +
   theme_bw(base_size = 15) +
   theme(axis.text.x = element_text(angle = 45))
@@ -377,27 +378,33 @@ items.brand %>% group_by(no.brand, mainCategory) %>% tally %>% ungroup %>%
 ![](figures/brands-4.png)
 
 ``` r
-items.brand %>% group_by(no.brand, category) %>% tally %>% ungroup %>%
+items.brand %>% group_by(no.brand, category, mainCategory) %>% 
+  tally %>% ungroup %>%
   mutate(no.brand = fct_reorder(no.brand, n, sum)) %>%
   ggplot(aes(x = no.brand, y = n, fill = category)) +
-  geom_bar(stat = "identity") + scale_y_sqrt() +
+  geom_bar(stat = "identity") +
   theme_bw(base_size = 15) +
+  facet_grid(mainCategory~., scales = "free_y") +
   scale_fill_brewer(palette = "Paired") +
   theme(axis.text.x = element_text(angle = 45))
 ```
 
-![](figures/brands-5.png)
+![](figures/category_brand-1.png)
 
 ``` r
-items.brand %>% group_by(no.brand, subCategory) %>% tally %>% ungroup %>%
+items.brand %>% group_by(no.brand, subCategory, mainCategory, category) %>%
+  tally %>% ungroup %>%
   mutate(no.brand = fct_reorder(no.brand, n, sum)) %>%
+  filter(!is.na(subCategory)) %>%
   ggplot(aes(x = no.brand, y = n, fill = subCategory)) +
-  geom_bar(stat = "identity") + scale_y_sqrt() +
+  geom_bar(stat = "identity") +
+  facet_grid(mainCategory+category~., scales = "free") +
   theme_bw(base_size = 15) +
-  theme(axis.text.x = element_text(angle = 45))
+  theme(axis.text.x = element_text(angle = 45),
+        legend.key.size = unit(0.5, "cm"))
 ```
 
-![](figures/brands-6.png)
+![](figures/subcategory_brand-1.png)
 
 ``` r
 alldata %>% group_by(pid, size, brand) %>% 
@@ -474,7 +481,7 @@ brands.all %>% arrange(desc(nstock)) %>% glimpse
 ```
 
     ## Observations: 25
-    ## Variables: 16
+    ## Variables: 17
     ## $ brand       <chr> "Nike", "adidas", "PUMA", "Jako", "Sport2000", "Un...
     ## $ nsale       <int> 170695, 109099, 11326, 9512, 5065, 1257, 474, 448,...
     ## $ nanyincr    <int> 578, 1017, 63, 2, 14, 0, 1, 2, 13, 0, 4, 1, 13, 0,...
@@ -482,6 +489,7 @@ brands.all %>% arrange(desc(nstock)) %>% glimpse
     ## $ nsame       <int> 48, 13, 1, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, ...
     ## $ no.brand    <chr> "25-Nike", "24-adidas", "23-PUMA", "22-Jako", "21-...
     ## $ npid        <int> 2126, 1277, 389, 377, 26, 75, 81, 32, 76, 91, 49, ...
+    ## $ nitem       <int> 6389, 3969, 772, 673, 58, 135, 107, 104, 136, 126,...
     ## $ nstock      <int> 25024, 15272, 1735, 1396, 326, 275, 242, 204, 199,...
     ## $ nsize       <int> 53, 61, 42, 50, 19, 21, 32, 19, 16, 17, 25, 18, 16...
     ## $ ncolor      <int> 17, 16, 15, 10, 4, 9, 7, 7, 7, 10, 9, 8, 9, 3, 4, ...
@@ -644,3 +652,20 @@ plotdata %>% group_by(pid, size) %>% mutate(avg.discount = mean(discount)) %>% u
 ```
 
 ![](figures/best_seller-1.png)
+
+### stock on Feb 1st
+
+``` r
+## 60% of the products only had one stock on Feb 1st
+mean(items$stock==1)
+```
+
+    ## [1] 0.5938865
+
+``` r
+items %>% ggplot() + 
+  geom_boxplot(aes(x = mainCategory, y = stock, color = releaseDate>ymd("2017-10-01"))) + 
+  scale_y_log10() + theme_bw(base_size = 15) + theme(legend.position = "bottom")
+```
+
+![](figures/stock-1.png)

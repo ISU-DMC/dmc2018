@@ -125,7 +125,7 @@ summary(alldata$diffprice)
 ## 25 brands
 items %>% group_by(brand) %>% 
   summarise(npid = length(unique(pid)), 
-            # nitem = n(),
+            nitem = n(),
             nstock = sum(stock),
             nsize = length(unique(size)),
             ncolor = length(unique(color)),
@@ -165,28 +165,37 @@ ggplot(data = train %>% left_join(items.brand, by = c("pid", "size")) %>%
   geom_boxplot(aes(x = no.brand, y = units, color = no.brand), alpha = 0.6) +
   scale_y_log10() + theme_bw(base_size = 15) + guides(color = FALSE) +
   theme(axis.text.x = element_text(angle = 45))
+
 ## category by brand
 items.brand %>% group_by(no.brand, mainCategory) %>% tally %>% ungroup %>%
   mutate(no.brand = fct_reorder(no.brand, n, sum),
          mainCategory = fct_relevel(factor(mainCategory), 15, 9, 1)) %>%
   ggplot(aes(x = no.brand, y = n, fill = mainCategory)) +
-  geom_bar(stat = "identity") + scale_y_sqrt() +
+  geom_bar(stat = "identity") + 
   scale_fill_brewer(palette = "Dark2") +
   theme_bw(base_size = 15) +
   theme(axis.text.x = element_text(angle = 45))
-items.brand %>% group_by(no.brand, category) %>% tally %>% ungroup %>%
+## ---- category_brand
+items.brand %>% group_by(no.brand, category, mainCategory) %>% 
+  tally %>% ungroup %>%
   mutate(no.brand = fct_reorder(no.brand, n, sum)) %>%
   ggplot(aes(x = no.brand, y = n, fill = category)) +
-  geom_bar(stat = "identity") + scale_y_sqrt() +
+  geom_bar(stat = "identity") +
   theme_bw(base_size = 15) +
+  facet_grid(mainCategory~., scales = "free_y") +
   scale_fill_brewer(palette = "Paired") +
   theme(axis.text.x = element_text(angle = 45))
-items.brand %>% group_by(no.brand, subCategory) %>% tally %>% ungroup %>%
+## ---- subcategory_brand
+items.brand %>% group_by(no.brand, subCategory, mainCategory, category) %>%
+  tally %>% ungroup %>%
   mutate(no.brand = fct_reorder(no.brand, n, sum)) %>%
+  filter(!is.na(subCategory)) %>%
   ggplot(aes(x = no.brand, y = n, fill = subCategory)) +
-  geom_bar(stat = "identity") + scale_y_sqrt() +
+  geom_bar(stat = "identity") +
+  facet_grid(mainCategory+category~., scales = "free") +
   theme_bw(base_size = 15) +
-  theme(axis.text.x = element_text(angle = 45))
+  theme(axis.text.x = element_text(angle = 45),
+        legend.key.size = unit(0.5, "cm"))
 
 ## ---- rising_prices
 alldata %>% group_by(pid, size, brand) %>% 
@@ -286,4 +295,11 @@ plotdata %>% group_by(pid, size) %>% mutate(avg.discount = mean(discount)) %>% u
   labs(x = "date", y = "", color = "") +
   theme_bw(base_size = 15) + theme(legend.position = "bottom") +
   facet_wrap(~label, nrow = 3)
+
+## ---- stock
+## 60% of the products only had one stock on Feb 1st
+mean(items$stock==1)
+items %>% ggplot() + 
+  geom_boxplot(aes(x = mainCategory, y = stock, color = releaseDate>ymd("2017-10-01"))) + 
+  scale_y_log10() + theme_bw(base_size = 15) + theme(legend.position = "bottom")
 
