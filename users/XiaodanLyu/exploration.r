@@ -57,7 +57,7 @@ items %>% left_join(prices_long, by = c("pid", "size")) %>%
 items %>% left_join(prices_long, by = c("pid", "size")) %>% 
   filter(date < releaseDate) %>% select(price) %>% is.na %>% any
 ## Q: any charateristic for a price before release date? 
-## released after 2017-10-01 , one-day earlier pre-sale adversing price 
+## released after 2017-10-01 , one-day earlier pre-sale advertising price 
 items %>% left_join(prices_long, by = c("pid", "size")) %>% 
   filter(!is.na(price)) %>% group_by(pid, size) %>%
   summarise(yn.pricebeforerelease = any(date < releaseDate),
@@ -72,7 +72,8 @@ items %>% left_join(prices_long, by = c("pid", "size")) %>%
 ## No, mostly lower than the actual sale price
 items %>% left_join(prices_long, by = c("pid", "size")) %>%
   filter(date<=releaseDate, releaseDate > ymd("2017-10-01"), !is.na(price)) %>%
-  group_by(pid, size) %>% summarise(diff = diff(price) %>% round(2)) %>% ungroup %>%
+  group_by(pid, size) %>% arrange(date) %>% 
+  summarise(diff = diff(price) %>% round(2)) %>% ungroup %>%
   select(diff) %>% table
 
 ## ---- calendar
@@ -100,11 +101,13 @@ daily.release %>% filter(releaseDate != ymd("2017-10-01")) %>%
 prettify(p2.release, label = c("label", "text", "text2"))
 
 ## ---- data_join
-## joining three tables: items, prices, train
+## joining the three tables: items, prices, train
 ## sale unit is zero if not appearing in the train data for a particular day
 ## discount: how many percent off the rrp
 ## diffprice: price differences from the day before
 ## reldiffprice: how many percent off price the day before
+prices %>% gather(date, price, -pid, -size) %>%
+  mutate(date = gsub("X", "", date) %>% ymd()) -> prices_long
 left_join(prices_long, train, by = c("pid", "size", "date")) %>% 
   left_join(items, by = c("pid", "size")) %>%
   filter(date>=releaseDate-1) %>% ## only keep price info since one day before releasedate
