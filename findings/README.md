@@ -12,7 +12,7 @@
 | [omnijust](https://github.com/omnijust) | |
 | [qiaoyang00](https://github.com/qiaoyang00) | |
 | [rksyouyou](https://github.com/rksyouyou) | |
-| [ShanYu3393](https://github.com/ShanYu3393) | | Notice: there are 7616 (pid size) only having one stock. Negative correlation bewteen daily sale and daily price.|
+| [ShanYu3393](https://github.com/ShanYu3393) | | Notice: there are 7616 (pid size) only having one stock. Negative correlation bewteen daily sale and daily price. |
 | [syrnluo](https://github.com/syrnluo) | |
 | [urmi-21](https://github.com/urmi-21) | |
 | [wangyan-iastate](https://github.com/wangyan-iastate) | |
