@@ -3,7 +3,7 @@
 | GitHub ID | Findings/Discussions |
 |---|--------------------|
 | [abhicc](https://github.com/abhicc) | Need to decide methods/techniques to predict date(and thus our target variable). One way could be waiting time approach. Predict the waiting time before unit(units) sell out. Need to decide how to combine info from all datasets and how to prepare train and test data. Think of ways to include effect of specific dates(days) and effect of 'February' month.  |
-| [EugeneHao](https://github.com/EugeneHao) | |
+| [EugeneHao](https://github.com/EugeneHao) |`- Besides the Black Friday, the price in Jan and Feb,2018 had large change and the change was very frequent. In Feb, the price rose up at the beginning and then dropped a lot on 25th. Probabiliy Winter Olympic and anther festival on 27th Feb had large impact. Around Valentine's Day, price changed little. ` <br/>`- the price had downtrend and got its lowest on 25th Feb and then rose up. `<br/>` By watch price trend for each category, we can find that the price changed in regularity per week(please check).`<br/>` (Yuchen Wang's finding)And items in Maincategory 15 had large discount, items in Maincategory 9 had small discount. In mainCateroty 1, items in category 2 had small discount and items in category 7 had large discount.`  |
 | [jiamingqiu](https://github.com/jiamingqiu) | |
 | [kstatju](https://github.com/kstatju) | |
 | [lijing28101](https://github.com/lijing28101) | |
