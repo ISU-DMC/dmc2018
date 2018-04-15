@@ -139,8 +139,8 @@ category_changePrice<-category_changePrice[order(category_changePrice[,3],decrea
 ```
 
 ```{r}
-price_dif2<-price_dif/items$rrp
-price_diftotal<-as.vector(apply(price_dif2,MARGIN=2,mean))
+price_dif2<-price_dif[order(prices$pid),]/items$rrp
+price_diftotal<-as.vector(apply(price_dif2,MARGIN=2,mean,na.rm=T))
 date=ymd(strtrim(seq(ISOdate(2017,10,2), ISOdate(2018,2,28), "DSTday"),10))
 d_pricediftotal<-data.frame(date,price_diftotal)
 ggplot(data=d_pricediftotal,aes(x=date,y=price_diftotal))+geom_line()

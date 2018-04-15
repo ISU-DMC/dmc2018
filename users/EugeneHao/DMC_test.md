@@ -587,8 +587,8 @@ change from 2017-10-1 to 2018-1-31.
                                category_changePrice[,2]/apply(category_changePrice,1,sum))
     category_changePrice<-category_changePrice[order(category_changePrice[,3],decreasing = T),]
 
-    price_dif2<-price_dif/items$rrp
-    price_diftotal<-as.vector(apply(price_dif2,MARGIN=2,mean))
+    price_dif2<-price_dif[order(prices$pid),]/items$rrp
+    price_diftotal<-as.vector(apply(price_dif2,MARGIN=2,mean,na.rm=T))
     date=ymd(strtrim(seq(ISOdate(2017,10,2), ISOdate(2018,2,28), "DSTday"),10))
     d_pricediftotal<-data.frame(date,price_diftotal)
     ggplot(data=d_pricediftotal,aes(x=date,y=price_diftotal))+geom_line()
@@ -629,8 +629,8 @@ by category and found that the price changed with regularity per week.
 Besides we can also find that different category has different discount.
 The category 7, 16, 24, 33 have big discount where 16, 24, 33 belong to
 mainCategory 15 and 7 belongs to mainCategory 1. Category 2, 10, 18, 36,
-37 have small discount where 10, 18, 36, 37 belong to mainCategory 9
-and 37 and 2 belongs to mainCategory 1.
+37 have small discount where 10, 18, 36, 37 belong to mainCategory 9 and
+37 and 2 belongs to mainCategory 1.
 
     table(items$category,items$mainCategory) %>% pander
 
