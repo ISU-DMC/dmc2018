@@ -629,8 +629,8 @@ by category and found that the price changed with regularity per week.
 Besides we can also find that different category has different discount.
 The category 7, 16, 24, 33 have big discount where 16, 24, 33 belong to
 mainCategory 15 and 7 belongs to mainCategory 1. Category 2, 10, 18, 36,
-37 have small discount where 10, 18, 36, 37 belong to mainCategory 15
-and 2 belongs to mainCategory 1.
+37 have small discount where 10, 18, 36, 37 belong to mainCategory 9
+and 37 and 2 belongs to mainCategory 1.
 
     table(items$category,items$mainCategory) %>% pander
 
