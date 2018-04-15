@@ -8,13 +8,26 @@ library(corrplot)
 train <- read.csv("../../data/raw_data/train.csv", sep = "|", stringsAsFactors = F)
 prices <- read.csv("../../data/raw_data/prices.csv", sep = "|", stringsAsFactors = F)
 items <- read.csv("../../data/raw_data/items.csv", sep = "|", stringsAsFactors = F)
-items <- items %>% mutate_at(vars(mainCategory:subCategory), funs(factor))
+train$date <- ymd(train$date)
+items$releaseDate <- ymd(items$releaseDate)
+items <- items %>% 
+  mutate(ctgroup = ifelse(subCategory %in% c(11, 12, 13, 27, 43), "accessories",
+                          ifelse(category %in% c(2, 37, 18, 36), "shoes", "clothes")),
+         category = paste(mainCategory, category, sep = "-"),
+         subCategory = paste(category, subCategory, sep = "-")) %>%
+  mutate_at(vars(mainCategory:subCategory), funs(factor))
 ## Q: set of keys the same for the three data sets? Yes
 key.items <- paste(items$pid, items$size, sep = " & ") 
 key.train <- paste(train$pid, train$size, sep = " & ") %>% unique
 key.prices <- paste(prices$pid, prices$size, sep = " & ") %>% unique
 identical(sort(key.items), sort(key.train))
 identical(sort(key.items), sort(key.prices))
+
+## ---- ggplot
+theme_mine <- function(){
+  theme_bw(base_size = 15)  +
+    theme(axis.text.x = element_text(angle = 45))
+}
 
 ## ---- items
 ## Q: any missing in items? Yes, subCategory
@@ -27,15 +40,21 @@ items %>% select(-size, -stock) %>% unique %>% glimpse
 items %>% group_by(pid) %>% 
   summarise(ncol = length(unique(color))) %>%
   select(ncol) %>% table()
-## Q:  How many of the items released before 2017-10-01? about 85%
-items$releaseDate <- ymd(items$releaseDate)
+## Q: How many of the items released before 2017-10-01? about 85%
 mean(items$releaseDate == ymd("2017-10-01"))
+## Q: category decode
+items %>%
+  ggplot(aes(x = subCategory, y = rrp, fill = category), color = FALSE) +
+  scale_fill_brewer(palette = "Paired") + scale_y_log10() +
+  geom_boxplot(outlier.size = .5) + guides(fill = FALSE) +
+  geom_hline(yintercept = 100, color = "red", linetype = 2) +
+  facet_wrap(~ctgroup, scales = "free", nrow = 3) + 
+  theme_mine()
 
 ## ---- train
 ## Q: any missing in training? No
 apply(train, 2, function(x) sum(is.na(x)))
 ## Q: sales data available everyday? Yes, from 2017-10-01 to 2018-01-31
-train$date <- ymd(train$date)
 range(train$date)
 all(seq(ymd("2017-10-01"), ymd('2018-01-31'), by = 1) %in% train$date)
 ## Q: any sale before releaseDate? No
@@ -116,6 +135,7 @@ left_join(prices_long, train, by = c("pid", "size", "date")) %>%
   group_by(pid, size) %>% 
   mutate(diffprice = price - lag(price)) %>%
   mutate(reldiffprice = diffprice/lag(price)*100) -> alldata
+alldata %>% glimpse
 ## Q: all prices lower than rrp? Yes
 summary(alldata$discount)
 ## Q: any rising prices? Yes
@@ -142,63 +162,64 @@ brands <- brands %>% mutate(brand = fct_reorder(brand, nstock, mean),
   select(brand, no.brand, everything())
 brands %>% arrange(desc(npid)) %>% glimpse
 
-## stock by brand, checking new names
-## first 12 brands with total stock less than 15
 items %>% left_join(brands %>% select(brand, no.brand), by = "brand") -> items.brand
-ggplot(data = items.brand %>% mutate(no.brand = fct_reorder(no.brand, stock, sum))) +
-  ggtitle("stock on Feb 1st by brand") +
-  geom_boxplot(aes(x=no.brand, y=stock, color = no.brand)) + 
-  scale_y_log10() + theme_bw(base_size = 15) + guides(color = FALSE) +
-  theme(axis.text.x = element_text(angle = 45)) 
-## rrp by brand 
-## Q: any brands are low-stock due to high rrp price? Yes
-ggplot(data = items.brand %>% mutate(no.brand = fct_reorder(no.brand, rrp, median))) +
-  ggtitle("recommended retail price by brand") +
-  geom_boxplot(aes(x=no.brand, y=rrp, color = no.brand)) + 
-  theme_bw(base_size = 15) + guides(color = FALSE) +
-  theme(axis.text.x = element_text(angle = 45)) 
-## sales by brand during Oct-Jan
-## stock strongly positively correlated with sales
-ggplot(data = train %>% left_join(items.brand, by = c("pid", "size")) %>%
-         mutate(no.brand = fct_reorder(no.brand, units, sum))) + 
-  ggtitle("sales during Oct-Jan by brand") +
-  geom_boxplot(aes(x = no.brand, y = units, color = no.brand), alpha = 0.6) +
-  scale_y_log10() + theme_bw(base_size = 15) + guides(color = FALSE) +
-  theme(axis.text.x = element_text(angle = 45))
-
 ## category by brand
-items.brand %>% group_by(no.brand, mainCategory) %>% tally %>% ungroup %>%
-  mutate(no.brand = fct_reorder(no.brand, n, sum),
-         mainCategory = fct_relevel(factor(mainCategory), 15, 9, 1)) %>%
-  ggplot(aes(x = no.brand, y = n, fill = mainCategory)) +
-  geom_bar(stat = "identity") + 
-  scale_fill_brewer(palette = "Dark2") +
-  theme_bw(base_size = 15) +
-  theme(axis.text.x = element_text(angle = 45))
-## ---- category_brand
-items.brand %>% group_by(no.brand, category, mainCategory) %>% 
-  tally %>% ungroup %>%
+items.brand %>% group_by(no.brand, category, ctgroup) %>% tally %>% ungroup %>%
   mutate(no.brand = fct_reorder(no.brand, n, sum)) %>%
   ggplot(aes(x = no.brand, y = n, fill = category)) +
-  geom_bar(stat = "identity") +
-  theme_bw(base_size = 15) +
-  facet_grid(mainCategory~., scales = "free_y") +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_hline(yintercept = 10, linetype = 2) +
+  geom_hline(yintercept = 100, linetype = 2) +
+  scale_fill_brewer(palette = "Paired") + scale_y_log10() +
+  labs(y = "# of items") +
+  facet_wrap(~ctgroup, scales = "free", nrow = 3) +
+  theme_mine()
+## stock by brand
+## first 12 brands with total stock less than 15
+## Reebok only has one piece of clothes in stock, others are all shoes, sold nine times
+## Both Selles and Kempa have only one stock, a piece of expensive clothes, sold once
+## Onitsuka has only one stock, a pair of shoes, sold once  
+items.brand %>% mutate(no.brand = fct_reorder(no.brand, stock, sum)) %>%
+  group_by(no.brand, category, ctgroup) %>% mutate(stock = sum(stock)) %>% ungroup %>%
+  ggplot(aes(x=no.brand, y=stock, fill = category)) +
+  ylab("stock on Feb 1st by brand") +
+  scale_fill_brewer(palette = "Paired") + scale_y_log10() + 
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_hline(yintercept = 10, linetype = 2) +
+  geom_hline(yintercept = 500, linetype = 2) +
+  facet_wrap(~ctgroup, nrow = 3, scales = "free") +
+  theme_mine() 
+
+alldata %>% filter(brand %in% c("Sells", "Kempa", "Onitsuka")|pid == 12742, units > 0) %>% glimpse
+
+## rrp by brand 
+## Q: any brands are low-stock due to high rrp price? Yes
+items.brand %>%
+  mutate(no.brand = fct_reorder(no.brand, rrp, median)) %>%
+  group_by(no.brand, category, ctgroup) %>%
+  summarise(rrp = median(rrp)) %>% ungroup %>%
+  ggplot(aes(x=no.brand, y=rrp, fill = category)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  ylab("median recommended retail price") +
+  geom_hline(yintercept = 25, linetype = 2) +
+  facet_wrap(~ctgroup, nrow = 3, scales = "free") +
   scale_fill_brewer(palette = "Paired") +
-  theme(axis.text.x = element_text(angle = 45))
-## ---- subcategory_brand
-items.brand %>% group_by(no.brand, subCategory, mainCategory, category) %>%
-  tally %>% ungroup %>%
-  mutate(no.brand = fct_reorder(no.brand, n, sum)) %>%
-  filter(!is.na(subCategory)) %>%
-  ggplot(aes(x = no.brand, y = n, fill = subCategory)) +
-  geom_bar(stat = "identity") +
-  facet_grid(mainCategory+category~., scales = "free") +
-  theme_bw(base_size = 15) +
-  theme(axis.text.x = element_text(angle = 45),
-        legend.key.size = unit(0.5, "cm"))
+  guides(color = FALSE) + theme_mine()
+## sale volumes by brand during Oct-Jan
+## stock strongly positively correlated with sales
+alldata %>% group_by(brand, category, ctgroup) %>% 
+  summarise(n = sum(units, na.rm = T)) %>% ungroup %>%
+  mutate(brand = fct_reorder(brand, n, sum)) %>%
+  ggplot(aes(x = brand, y = n, fill = category)) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  geom_hline(yintercept = 10, linetype = 2) +
+  scale_fill_brewer(palette = "Paired") + scale_y_log10() +
+  labs(y = "sale volumes during Oct-Jan by brand") +
+  facet_wrap(~ctgroup, scales = "free", nrow = 3) +
+  theme_mine()
 
 ## ---- rising_prices
-alldata %>% group_by(pid, size, brand) %>% 
+alldata %>% group_by(pid, size, brand, ctgroup) %>% 
   summarise(yn.priceincr = any(reldiffprice > 0, na.rm = T),
             yn.newrelease = any(releaseDate > ymd("2017-10-01")),
             yn.pricechange = any(reldiffprice != 0, na.rm = T)) %>%
@@ -209,21 +230,40 @@ check %>% select(yn.pricechange, yn.newrelease) %>% table
 ## Q: all changing prices are at least increased once? No
 check %>% select(yn.pricechange, yn.priceincr) %>% table
 ## distribution by brand
-check %>% group_by(brand) %>% 
+check %>% group_by(brand, ctgroup) %>% 
   summarise(nanyincr = sum(yn.priceincr), 
             nalldecr = sum(yn.pricechange) - sum(yn.priceincr),
             nsame = sum(yn.newrelease) - sum(yn.pricechange)
   ) %>% ungroup() %>%
-  left_join(brands, by = "brand") -> brands.item.price
-brands.item.price %>% select(nanyincr:no.brand) %>%
-  mutate(no.brand = fct_reorder(no.brand, nanyincr, identity)) %>%
-  gather(group, value, -no.brand) %>% 
-  # filter(value>0) %>%
+  left_join(brands %>% select(brand, no.brand), by = "brand") -> brands.check
+brands.check %>% select(ctgroup, nanyincr:no.brand) %>%
+  mutate(no.brand = fct_reorder(no.brand, nanyincr, sum)) %>%
+  gather(group, value, -no.brand, -ctgroup) %>% 
   mutate(group = fct_relevel(group, "nalldecr", "nanyincr", after = Inf)) %>%
-  ggplot(aes(x = no.brand)) + scale_y_sqrt() +
-  geom_bar(stat = "identity", aes(y = value, fill = group)) +
+  ggplot(aes(x = no.brand, y = value, fill = group)) + scale_y_sqrt() +
+  facet_wrap(~ctgroup, scales = "free", nrow = 3) +
+  geom_bar(stat = "identity", position = "dodge") +
   labs(title = "# of new released products by brand", fill = "") + 
-  theme_bw(base_size = 15) + theme(axis.text.x = element_text(angle = 45)) 
+  theme_mine()
+
+## ---- brand_correlation
+## Q: similarities among brands? brand type
+train %>% left_join(items %>% select(pid, size, brand), by = c("pid", "size")) %>%
+  group_by(brand) %>% summarise(nsale = sum(units)) %>% ungroup %>%
+  left_join(brands.check %>% group_by(brand) %>%
+              summarise_at(vars(nanyincr:nsame), funs(sum)),
+            by = "brand") %>%
+  left_join(brands, by = "brand")-> brands.all
+brands.all %>% arrange(desc(nstock)) %>% glimpse
+brands.cols <- brands.all %>% select(-brand, -no.brand, -order)
+## standardize variables before computing correlation
+brandst <- data.frame(t(scale(brands.cols)))
+## not standardized columns
+# brandst <- data.frame(t(brands.cols))
+colnames(brandst) <- unlist(brands$no.brand)
+brands.cor <- cor(brandst)
+# corrplot(brands.cor, type = "upper", order = "FPC")
+corrplot(brands.cor, type = "full", order = "hclust", addrect = 13)
 
 ## ---- nike&adidas
 ## competing brands: nike and adidas
@@ -241,44 +281,27 @@ items %>% filter(releaseDate > ymd("2017-10-01"), brand %in% c("Nike", "adidas")
   labs(y = "# of released products", fill = "") +
   theme_bw(base_size = 15)
 
-## Q: similarities among brands? brand type
-train %>% left_join(items %>% select(pid, size, brand), by = c("pid", "size")) %>%
-  group_by(brand) %>% summarise(nsale = sum(units)) %>% ungroup %>%
-  left_join(brands.item.price, by = "brand") -> brands.all
-brands.all %>% arrange(desc(nstock)) %>% glimpse
-brands.cols <- brands.all %>% select(-brand, -no.brand, -order)
-## standardize variables before computing correlation
-brandst <- data.frame(t(scale(brands.cols)))
-## not standardized columns
-# brandst <- data.frame(t(brands.cols))
-colnames(brandst) <- unlist(brands$no.brand)
-brands.cor <- cor(brandst)
-corrplot(brands.cor, type = "upper", order = "FPC")
-corrplot(brands.cor, type = "full", order = "hclust", addrect = 13)
-
 ## ---- best_seller
 ## Q: which is the bestseller among all (pid, size)?
 alldata %>% group_by(pid, size) %>% 
   summarise(nsale = sum(units, na.rm = T)) %>% 
   arrange(desc(nsale)) %>% head(1)
-## being sold everyday, prices never change, 40% off
-alldata %>% filter(pid == 12985, size == "L") %>% arrange(desc(units)) %>% head(10)
+## Q: which is the bestseller among which there is no discount all the time?
+alldata %>% group_by(pid, size) %>% filter(all(discount == 0)) %>% 
+  summarise(nsale = sum(units, na.rm = T)) %>% 
+  arrange(desc(nsale)) %>% head(1)
 ## Q: which is the bestseller among which there is an increase in price?
 alldata %>% group_by(pid, size) %>% 
   filter(any(reldiffprice > 0)) %>% 
   summarise(nsale = sum(units, na.rm = T)) %>% 
   arrange(desc(nsale)) %>% head(1)
-alldata %>% filter(pid == 20828, size == "L") %>% arrange(desc(abs(reldiffprice))) %>% head(10)
-## Q: which is the bestseller among which there is no discount all the time?
-alldata %>% group_by(pid, size) %>% filter(all(discount == 0)) %>% 
-  summarise(nsale = sum(units, na.rm = T)) %>% 
-  arrange(desc(nsale)) %>% head(1)
-alldata %>% filter(pid == 22144, size == "L ( 42-46 )") %>% arrange(desc(units)) %>% head(10)
 
 itemsofinterest <- data.frame(
-  label = c("bestseller", "bestseller - rising price", "bestseller - no discount"),
+  label = c("bestseller (12985, L)", "bestseller - rising price (20828, L)", 
+            "bestseller - no discount (22144, L)"),
   pid = c(12985, 20828, 22144), size = c("L", "L", "L ( 42-46 )"))
 alldata %>% inner_join(itemsofinterest, by = c("pid", "size")) -> plotdata
+plotdata %>% filter(!duplicated(cbind(pid, size))) %>% glimpse
 ## time series plot
 ## holiday reference: www.timeanddate.com/holidays/germany/2017
 plotdata %>% group_by(pid, size) %>% mutate(avg.discount = mean(discount)) %>% ungroup %>%
@@ -286,7 +309,7 @@ plotdata %>% group_by(pid, size) %>% mutate(avg.discount = mean(discount)) %>% u
   geom_line(aes(y = units, color = "daily sale (unit)")) +
   geom_line(aes(y = reldiffprice, color = "daily price change (%)")) +
   geom_label(aes(x = max(date), y = max(units, na.rm = T),
-                 label = sprintf("brand: %s, rrp: %.2f, %.0f%% off", brand, rrp, avg.discount)),
+                 label = sprintf("subCategory: %s, %s, %.0f%% off", subCategory, ctgroup, avg.discount)),
              hjust = 1, vjust = 1, size = 5, fontface = "bold") +
   geom_vline(aes(color = "NH - German Unity", xintercept = ymd("2017-10-03")), show.legend = T) +
   geom_vline(aes(color = "NH - Reformation Day", xintercept = ymd("2017-10-31")), show.legend = T) +
@@ -299,7 +322,61 @@ plotdata %>% group_by(pid, size) %>% mutate(avg.discount = mean(discount)) %>% u
 ## ---- stock
 ## 60% of the products only had one stock on Feb 1st
 mean(items$stock==1)
-items %>% ggplot() + 
-  geom_boxplot(aes(x = mainCategory, y = stock, color = releaseDate>ymd("2017-10-01"))) + 
-  scale_y_log10() + theme_bw(base_size = 15) + theme(legend.position = "bottom")
+items %>%
+  ggplot(aes(x = subCategory, y = stock, fill = category)) + 
+  geom_boxplot(outlier.size = 0.5) +
+  geom_hline(yintercept = 10, linetype = 2) +
+  scale_fill_brewer(palette = "Paired") +
+  facet_wrap(~ctgroup, nrow = 3, scales = "free") +
+  scale_y_log10() + theme_mine()
+
+## ---- sales
+alldata %>% group_by(pid, size, subCategory) %>%
+  mutate(nsale = sum(units, na.rm = T)) %>% ungroup %>%
+  ggplot(aes(x = subCategory, y = nsale, fill = category)) + 
+  ylab("sale volumes during Oct-Jan by category") +
+  geom_boxplot(outlier.size = .5) + guides(color = FALSE) +
+  facet_wrap(~ctgroup, nrow = 3, scales = "free_x") +
+  geom_hline(yintercept = 10, linetype = 2) + 
+  scale_fill_brewer(palette = "Paired") + scale_y_log10() +
+  theme_mine()
+
+## ---- discount
+## products with changing prices
+## 1-7 tops and bottoms 
+## 9-18 and 9-36 are sports shoes
+alldata %>% inner_join(check, by = c("pid", "size", "brand", "ctgroup")) %>%
+  # mutate(category = paste(mainCategory, category, sep = "-")) %>%
+  filter(yn.pricechange) %>% group_by(date, category, ctgroup) %>%
+  summarise(discount = mean(discount)) %>% ungroup %>%
+  ggplot(aes(x = date, y = discount, color = factor(category))) + 
+  geom_line(size = rel(1)) + facet_grid(ctgroup~.) +
+  scale_color_brewer(palette = "Paired") + theme_bw(base_size = 15) +
+  geom_vline(xintercept = ymd("2017-10-31"), linetype = 2, size = rel(0.8)) +
+  geom_vline(xintercept = ymd("2017-11-24"), linetype = 2, size = rel(0.8)) +
+  geom_vline(xintercept = ymd("2018-02-14"), linetype = 2, size = rel(0.8))
+
+## old products, constant prices
+## 1-2-27, nitem = 9, no size, no-discount, cheap, shoelaces?
+## 9-36-38, nitem = 4, npid = 2, Nike, women-shoes?
+alldata %>% inner_join(check, by = c("pid", "size", "brand", "ctgroup")) %>%
+  filter(!yn.newrelease, !duplicated(cbind(pid, size))) %>% 
+  ggplot(aes(x = subCategory, y = discount, fill = category), color = FALSE) +
+  scale_fill_brewer(palette = "Paired") +
+  geom_boxplot(outlier.size = 0.5) + guides(fill = FALSE) +
+  facet_wrap(~ctgroup, scales = "free", nrow = 3) +
+  geom_hline(yintercept = 40, color = "red", linetype = 2) +
+  theme_mine()
+
+## new released products, constant prices
+## 1-7-43 all released after 2017-10-01, nitem = 3 constant prices
+alldata %>% inner_join(check, by = c("pid", "size", "brand", "ctgroup")) %>%
+  filter(yn.newrelease, !yn.pricechange, !duplicated(cbind(pid, size))) %>% 
+  ggplot(aes(x = subCategory, y = discount, fill = category), color = FALSE) +
+  scale_fill_brewer(palette = "Paired") +
+  geom_boxplot(outlier.size = 0.5) + guides(fill = FALSE) +
+  facet_wrap(~ctgroup, scales = "free", nrow = 3) +
+  theme_mine()
+
+
 
