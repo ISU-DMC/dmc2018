@@ -626,13 +626,11 @@ lowest on 25th Feb and then rose up a lot.
     ggplot(data=prices_average2,aes(x=date,y=value,col=as.factor(category)))+
       geom_line()+facet_wrap(~category,ncol=3)+theme(legend.position='none')
 
-![](figures/unnamed-chunk-18-1.png) I tried to analyze the price grouped
-by category and found that the price changed with regularity per week.
-Besides we can also find that different category has different discount.
-The category 7, 16, 24, 33 have big discount where 16, 24, 33 belong to
-mainCategory 15 and 7 belongs to mainCategory 1. Category 2, 10, 18, 36,
-37 have small discount where 10, 18, 36, 37 belong to mainCategory 9 and
-37 and 2 belongs to mainCategory 1.
+![](figures/unnamed-chunk-18-1.png) we can find that different category
+has different discount. The category 7, 16, 24, 33 have big discount
+where 16, 24, 33 belong to mainCategory 15 and 7 belongs to mainCategory
+1. Category 2, 10, 18, 36, 37 have small discount where 10, 18, 36, 37
+belong to mainCategory 9 and 37 and 2 belongs to mainCategory 1.
 
     table(items$category,items$mainCategory) %>% pander
 
