@@ -620,9 +620,11 @@ but not very much.
 over rrp for all items. We can find the downtrend and the price got the
 lowest on 25th Feb and then rose up a lot.
 
-    prices_average %>% group_by(category) %>% summarise_all(funs(mean(.,na.rm=T))) %>% as.data.frame() %>% gather(date,value,-category) ->prices_average2
+    prices_average$category<-factor(prices_average$category)
+    prices_average%>% gather(date,value,-category)%>% group_by(category,date) %>% summarise_at(vars(value), funs(mean(., na.rm=T))) %>% ungroup %>% as.data.frame() ->prices_average2
     prices_average2$date<-rep(date2,each1=10)
-    ggplot(data=prices_average2,aes(x=date,y=value))+geom_line()+facet_wrap(~category)
+    ggplot(data=prices_average2,aes(x=date,y=value,col=as.factor(category)))+
+      geom_line()+facet_wrap(~category,ncol=3)+theme(legend.position='none')
 
 ![](figures/unnamed-chunk-18-1.png) I tried to analyze the price grouped
 by category and found that the price changed with regularity per week.
@@ -712,3 +714,8 @@ mainCategory 15 and 7 belongs to mainCategory 1. Category 2, 10, 18, 36,
 </tr>
 </tbody>
 </table>
+
+    ggplot(data=prices_average2,aes(x=date,y=value,col=as.factor(category)))+
+      geom_line()+facet_wrap(~category,scales="free",ncol=3)+theme(legend.position='none')
+
+![](figures/unnamed-chunk-19-1.png)
