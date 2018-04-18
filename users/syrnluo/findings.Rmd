@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #overall brand persentage
 
-```{r cars}
+```{r brands}
 
 library(clustMixType)
 library(klaR)
@@ -92,7 +92,7 @@ totalsale$logsale[which(!is.finite(totalsale$logsale))] <- 0
 
 all_price_af<-ddply(after_long,.(date,mainCategory),summarize,meanPrice=discount(perPrice))
 
-ggplot(all_sale_price,aes(x=date,y=meanPrice)) +
+ggplot(all_price_af,aes(x=date,y=meanPrice)) +
   geom_line()+
  facet_wrap(~ mainCategory, scales = 'free_y', ncol = 1)
 
@@ -115,6 +115,3 @@ ggplot(all_sale_price,
 
 ```
 
-
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
