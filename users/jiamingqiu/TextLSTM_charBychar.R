@@ -3,6 +3,33 @@
 # modified from
 # https://keras.rstudio.com/articles/examples/lstm_text_generation.html
 
+# This model (LSTM RNN) take input of a sentence of length = maxlen
+# and predict the next character recurrently. I.e., once a prediction
+# is made, it update the sentence by dropped the 1st character and
+# append the predicted charater, take the updated sentence and make
+# prediction in the next round. 
+#
+# While trainning, the input x is a colection of matries whose rows
+# are 1-hot array, one matrix represents one sentence.
+# Response y is just an matrix of 1-hot array of characters representing
+# the next character for the corresponding sentence.
+#
+# This structure might be modify to suit our purpose, though, if we were
+# really doing this, we have to set this up on clusters with GPU and sufficient
+# RAM, fitting this on our DMC data with laptop will be a nightmare.
+# And it leads to another problem of properly configure this "keras" package
+# and Tensorflow backend, which is kind of painful, and I have no idea how to
+# do this on clusters.
+
+# To run this example code with GPU, you need to first install Python and 
+# GPU version of Tensorflow, then install R package keras. (make sure everything
+# is up-to-date.)
+# For detail, refer to 
+# https://tensorflow.rstudio.com/keras/reference/install_keras.html
+# If you just want to try this with CPU, which, from my experience, tend to be 5
+# to 10 times slower, just follow
+# https://cran.r-project.org/web/packages/keras/vignettes/getting_started.html
+# (I did not try this.)
 
 library(keras)
 library(readr)
