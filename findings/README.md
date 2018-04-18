@@ -11,7 +11,7 @@
 | [mujingru](https://github.com/mujingru) | |
 | [omnijust](https://github.com/omnijust) | |
 | [qiaoyang00](https://github.com/qiaoyang00) | |
-| [rksyouyou](https://github.com/rksyouyou) | |
+| [rksyouyou](https://github.com/rksyouyou) | `- Size count for each product. More than 40% of products have size count equal to 1. A new variable can be construct based on the size count of a product.`<br/> `- Some sizes are less informative and could be treated as the same category, e.g. “M(38/40)” and “M(38-42)”. Categories like this could be useful when combining with other features.` <br/> - [shoe size web](https://www.healthyfeetstore.com/shoe-length-sizing-charts.html)<br/> - [European sizes](https://www.blitzresults.com/en/european-sizes/). |
 | [ShanYu3393](https://github.com/ShanYu3393) | Notice: there are 7616 (pid size) only having one stock. Negative correlation between daily sale and daily price. |
 | [syrnluo](https://github.com/syrnluo) | |
 | [urmi-21](https://github.com/urmi-21) | |
