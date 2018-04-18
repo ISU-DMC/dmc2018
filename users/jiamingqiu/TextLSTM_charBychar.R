@@ -188,6 +188,7 @@ print_callback <- callback_lambda(on_epoch_end = on_epoch_end)
 # batch_size = # of sample per gradient update
 # epochs = maxiter
 # should be fairly quick if you run this with some GPU
+# 1 epoch takes ~11sec on my laptop.
 model %>% fit(
   x, y,
   batch_size = 64,
