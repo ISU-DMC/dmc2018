@@ -43,6 +43,10 @@ items %>% group_by(pid) %>%
 ## Q: How many of the items released before 2017-10-01? about 85%
 mean(items$releaseDate == ymd("2017-10-01"))
 ## Q: category decode
+items %>% group_by(subCategory) %>%
+  summarise(sizes = paste(unique(size), collapse = ","), 
+            rrps = paste(unique(rrp), collapse = ","), 
+            brands = paste(unique(brand), collapse = ",")) -> items.subcat
 items %>%
   ggplot(aes(x = subCategory, y = rrp, fill = category), color = FALSE) +
   scale_fill_brewer(palette = "Paired") + scale_y_log10() +
@@ -131,10 +135,12 @@ left_join(prices_long, train, by = c("pid", "size", "date")) %>%
   left_join(items, by = c("pid", "size")) %>%
   filter(date>=releaseDate-1) %>% ## only keep price info since one day before releasedate
   mutate(units = replace(units, is.na(units) & date < ymd("2018-02-01"), 0),
+         key = paste(pid, size, sep = " - "),
          discount = (rrp-price)/rrp*100) %>% 
   group_by(pid, size) %>% 
-  mutate(diffprice = price - lag(price)) %>%
-  mutate(reldiffprice = diffprice/lag(price)*100) -> alldata
+  mutate(diffprice = price - lag(price),
+         reldiffprice = diffprice/lag(price)*100) %>%
+  ungroup -> alldata
 alldata %>% glimpse
 ## Q: all prices lower than rrp? Yes
 summary(alldata$discount)
@@ -222,7 +228,10 @@ alldata %>% group_by(brand, category, ctgroup) %>%
 alldata %>% group_by(pid, size, brand, ctgroup) %>% 
   summarise(yn.priceincr = any(reldiffprice > 0, na.rm = T),
             yn.newrelease = any(releaseDate > ymd("2017-10-01")),
-            yn.pricechange = any(reldiffprice != 0, na.rm = T)) %>%
+            yn.pricechange = any(reldiffprice != 0, na.rm = T),
+            nsale = sum(units, na.rm = T),
+            avg.discount = mean(discount),
+            pho = cor(units, discount, use = "complete.obs")) %>%
   ungroup -> check
 ## Q: changing prices only happen to new released products? Yes
 ## Q: all new released products have changing prices? No
@@ -330,6 +339,10 @@ items %>%
   facet_wrap(~ctgroup, nrow = 3, scales = "free") +
   scale_y_log10() + theme_mine()
 
+items %>% mutate(yn.onestock = (stock==1)) %>%
+  left_join(check, by = c("pid", "size", "ctgroup", "brand")) %>% 
+  select(yn.onestock, yn.pricechange) %>% table()
+
 ## ---- sales
 alldata %>% group_by(pid, size, subCategory) %>%
   mutate(nsale = sum(units, na.rm = T)) %>% ungroup %>%
@@ -355,6 +368,19 @@ alldata %>% inner_join(check, by = c("pid", "size", "brand", "ctgroup")) %>%
   geom_vline(xintercept = ymd("2017-10-31"), linetype = 2, size = rel(0.8)) +
   geom_vline(xintercept = ymd("2017-11-24"), linetype = 2, size = rel(0.8)) +
   geom_vline(xintercept = ymd("2018-02-14"), linetype = 2, size = rel(0.8))
+
+## correlation between sale-volume and discount
+tb <- items %>% left_join(check, by = c("pid", "size", "brand", "ctgroup"))
+tb %>% arrange(desc(abs(pho))) %>% glimpse
+## pho only available for items with changing prices before Feb 1st
+tb %>% filter(!is.na(pho)) %>% 
+  ggplot(aes(x = subCategory, y = pho)) +
+  geom_hline(yintercept = 0, color = "red", linetype = 2) +
+  geom_boxplot(aes(fill = category), outlier.size = .5) +
+  scale_fill_brewer(palette = "Paired") +
+  facet_wrap(~ctgroup, nrow = 3, scales = "free_x") +
+  labs(title = "correlation between sale-volume and discount by item") +
+  theme_mine()
 
 ## old products, constant prices
 ## 1-2-27, nitem = 9, no size, no-discount, cheap, shoelaces?

@@ -103,6 +103,10 @@ mean(items$releaseDate == ymd("2017-10-01"))
 
 ``` r
 ## Q: category decode
+items %>% group_by(subCategory) %>%
+  summarise(sizes = paste(unique(size), collapse = ","), 
+            rrps = paste(unique(rrp), collapse = ","), 
+            brands = paste(unique(brand), collapse = ",")) -> items.subcat
 items %>%
   ggplot(aes(x = subCategory, y = rrp, fill = category), color = FALSE) +
   scale_fill_brewer(palette = "Paired") + scale_y_log10() +
@@ -293,15 +297,17 @@ left_join(prices_long, train, by = c("pid", "size", "date")) %>%
   left_join(items, by = c("pid", "size")) %>%
   filter(date>=releaseDate-1) %>% ## only keep price info since one day before releasedate
   mutate(units = replace(units, is.na(units) & date < ymd("2018-02-01"), 0),
+         key = paste(pid, size, sep = " - "),
          discount = (rrp-price)/rrp*100) %>% 
   group_by(pid, size) %>% 
-  mutate(diffprice = price - lag(price)) %>%
-  mutate(reldiffprice = diffprice/lag(price)*100) -> alldata
+  mutate(diffprice = price - lag(price),
+         reldiffprice = diffprice/lag(price)*100) %>%
+  ungroup -> alldata
 alldata %>% glimpse
 ```
 
     ## Observations: 1,834,669
-    ## Variables: 17
+    ## Variables: 18
     ## $ pid          <int> 19671, 19671, 19671, 19671, 19671, 19671, 19671, ...
     ## $ size         <chr> "39 1/3", "40", "41 1/3", "42", "42 2/3", "43 1/3...
     ## $ date         <date> 2017-10-01, 2017-10-01, 2017-10-01, 2017-10-01, ...
@@ -316,6 +322,7 @@ alldata %>% glimpse
     ## $ stock        <int> 1, 1, 3, 1, 5, 1, 1, 6, 5, 3, 3, 1, 1, 1, 1, 1, 2...
     ## $ releaseDate  <date> 2017-10-01, 2017-10-01, 2017-10-01, 2017-10-01, ...
     ## $ ctgroup      <chr> "shoes", "shoes", "shoes", "shoes", "shoes", "sho...
+    ## $ key          <chr> "19671 - 39 1/3", "19671 - 40", "19671 - 41 1/3",...
     ## $ discount     <dbl> 29.99527, 29.99527, 29.99527, 29.99527, 29.99527,...
     ## $ diffprice    <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N...
     ## $ reldiffprice <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N...
@@ -419,7 +426,7 @@ alldata %>% filter(brand %in% c("Sells", "Kempa", "Onitsuka")|pid == 12742, unit
 ```
 
     ## Observations: 4
-    ## Variables: 17
+    ## Variables: 18
     ## $ pid          <int> 16494, 12742, 13619, 21210
     ## $ size         <chr> "L", "S", "XL", "39"
     ## $ date         <date> 2017-11-24, 2017-11-27, 2017-12-27, 2017-12-30
@@ -434,6 +441,7 @@ alldata %>% filter(brand %in% c("Sells", "Kempa", "Onitsuka")|pid == 12742, unit
     ## $ stock        <int> 1, 1, 1, 1
     ## $ releaseDate  <date> 2017-10-01, 2017-10-01, 2017-10-01, 2017-10-01
     ## $ ctgroup      <chr> "clothes", "clothes", "clothes", "shoes"
+    ## $ key          <chr> "16494 - L", "12742 - S", "13619 - XL", "21210 - 39"
     ## $ discount     <dbl> 29.98818, 20.01052, 20.00210, 37.49631
     ## $ diffprice    <dbl> 0, 0, 0, 0
     ## $ reldiffprice <dbl> 0, 0, 0, 0
@@ -477,7 +485,10 @@ alldata %>% group_by(brand, category, ctgroup) %>%
 alldata %>% group_by(pid, size, brand, ctgroup) %>% 
   summarise(yn.priceincr = any(reldiffprice > 0, na.rm = T),
             yn.newrelease = any(releaseDate > ymd("2017-10-01")),
-            yn.pricechange = any(reldiffprice != 0, na.rm = T)) %>%
+            yn.pricechange = any(reldiffprice != 0, na.rm = T),
+            nsale = sum(units, na.rm = T),
+            avg.discount = mean(discount),
+            pho = cor(units, discount, use = "complete.obs")) %>%
   ungroup -> check
 ## Q: changing prices only happen to new released products? Yes
 ## Q: all new released products have changing prices? No
@@ -636,7 +647,7 @@ plotdata %>% filter(!duplicated(cbind(pid, size))) %>% glimpse
 ```
 
     ## Observations: 3
-    ## Variables: 18
+    ## Variables: 19
     ## $ pid          <dbl> 22144, 12985, 20828
     ## $ size         <chr> "L ( 42-46 )", "L", "L"
     ## $ date         <date> 2017-10-01, 2017-10-01, 2017-11-15
@@ -651,6 +662,7 @@ plotdata %>% filter(!duplicated(cbind(pid, size))) %>% glimpse
     ## $ stock        <int> 30, 101, 149
     ## $ releaseDate  <date> 2017-10-01, 2017-10-01, 2017-11-16
     ## $ ctgroup      <chr> "accessories", "clothes", "clothes"
+    ## $ key          <chr> "22144 - L ( 42-46 )", "12985 - L", "20828 - L"
     ## $ discount     <dbl> 0.00000, 40.00830, 44.86497
     ## $ diffprice    <dbl> NA, NA, NA
     ## $ reldiffprice <dbl> NA, NA, NA
@@ -698,6 +710,17 @@ items %>%
 
 ![](figures/stock-1.png)
 
+``` r
+items %>% mutate(yn.onestock = (stock==1)) %>%
+  left_join(check, by = c("pid", "size", "ctgroup", "brand")) %>% 
+  select(yn.onestock, yn.pricechange) %>% table()
+```
+
+    ##            yn.pricechange
+    ## yn.onestock FALSE TRUE
+    ##       FALSE  4316  892
+    ##       TRUE   6642  974
+
 ### sale volumes
 
 ``` r
@@ -735,6 +758,46 @@ alldata %>% inner_join(check, by = c("pid", "size", "brand", "ctgroup")) %>%
 ![](figures/discount-1.png)
 
 ``` r
+## correlation between sale-volume and discount
+tb <- items %>% left_join(check, by = c("pid", "size", "brand", "ctgroup"))
+tb %>% arrange(desc(abs(pho))) %>% glimpse
+```
+
+    ## Observations: 12,824
+    ## Variables: 17
+    ## $ pid            <int> 14773, 12111, 12111, 18426, 18499, 15878, 10730...
+    ## $ size           <chr> "M", "L", "S", "L", "S", "XL ( 158-170 )", "M",...
+    ## $ color          <chr> "schwarz", "blau", "blau", "gruen", "rot", "sch...
+    ## $ brand          <chr> "Nike", "adidas", "adidas", "Nike", "Nike", "Ni...
+    ## $ rrp            <dbl> 69.78, 50.73, 50.73, 50.73, 50.73, 17.71, 50.73...
+    ## $ mainCategory   <fctr> 9, 1, 1, 1, 1, 1, 1, 15, 1, 1, 1, 15, 1, 15, 1...
+    ## $ category       <fctr> 9-10, 1-7, 1-7, 1-7, 1-7, 1-7, 1-7, 15-24, 1-7...
+    ## $ subCategory    <fctr> 9-10-35, 1-7-23, 1-7-23, 1-7-20, 1-7-20, 1-7-2...
+    ## $ stock          <int> 1, 1, 1, 1, 1, 3, 6, 3, 2, 1, 6, 14, 14, 29, 1,...
+    ## $ releaseDate    <date> 2018-01-22, 2017-10-23, 2017-10-23, 2017-11-20...
+    ## $ ctgroup        <chr> "clothes", "clothes", "clothes", "clothes", "cl...
+    ## $ yn.priceincr   <lgl> FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE...
+    ## $ yn.newrelease  <lgl> TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,...
+    ## $ yn.pricechange <lgl> TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,...
+    ## $ nsale          <dbl> 1, 3, 4, 2, 2, 7, 24, 3, 5, 10, 2, 11, 5, 72, 1...
+    ## $ avg.discount   <dbl> 24.80543, 40.77727, 40.45247, 41.78407, 41.7840...
+    ## $ pho            <dbl> 0.9786389, -0.9557390, -0.9557390, 0.8099404, 0...
+
+``` r
+## pho only available for items with changing prices before Feb 1st
+tb %>% filter(!is.na(pho)) %>% 
+  ggplot(aes(x = subCategory, y = pho)) +
+  geom_hline(yintercept = 0, color = "red", linetype = 2) +
+  geom_boxplot(aes(fill = category), outlier.size = .5) +
+  scale_fill_brewer(palette = "Paired") +
+  facet_wrap(~ctgroup, nrow = 3, scales = "free_x") +
+  labs(title = "correlation between sale-volume and discount by item") +
+  theme_mine()
+```
+
+![](figures/discount-2.png)
+
+``` r
 ## old products, constant prices
 ## 1-2-27, nitem = 9, no size, no-discount, cheap, shoelaces?
 ## 9-36-38, nitem = 4, npid = 2, Nike, women-shoes?
@@ -748,7 +811,7 @@ alldata %>% inner_join(check, by = c("pid", "size", "brand", "ctgroup")) %>%
   theme_mine()
 ```
 
-![](figures/discount-2.png)
+![](figures/discount-3.png)
 
 ``` r
 ## new released products, constant prices
@@ -762,4 +825,4 @@ alldata %>% inner_join(check, by = c("pid", "size", "brand", "ctgroup")) %>%
   theme_mine()
 ```
 
-![](figures/discount-3.png)
+![](figures/discount-4.png)
