@@ -106,7 +106,7 @@ all_sale_price<-full_join(all_price_af,totalsale,by=c("date","mainCategory"))
 all_sale_price$mainCategory<-as.factor(all_sale_price$mainCategory)
 #all_sale_price$category<-as.factor(all_sale_price$category)
 
-####blue lines are the mean price (in persentage of rrp), red line is log(sale)/10# 
+####blue lines are the mean price (in percentage of rrp), red line is log(sale)/10# 
 ggplot(all_sale_price,
        aes(x=date)) +
   geom_line(aes(y=logsale/10), color="red") +
