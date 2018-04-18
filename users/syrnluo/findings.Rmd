@@ -1,0 +1,122 @@
+---
+title: "findings"
+author: "Jiayi Luo"
+date: "4/15/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#overall brand persentage
+
+```{r brands}
+
+library(clustMixType)
+library(klaR)
+library(data.table)
+library(lubridate)
+library(dplyr)
+library(plyr)
+library(ggplot2)
+library(tidyr)
+setwd("~/Dropbox/DMC")
+train <- read.csv("raw_data/train.csv", sep = "|")
+prices <- read.csv("raw_data/prices.csv", sep = "|")
+items <- read.csv("raw_data/items.csv", sep = "|")
+#Sale=read.csv("sale.csv")
+#train<-fread("train.csv",head=T) #135117#
+#prices<-fread("prices.csv",head=T) #12824*153##
+#items<-fread("items.csv",head=T) #12824*10#
+
+#the brand that has more than 100 items#
+bigbr<-c("adidas","Jako","Erima","Converse",
+           "Jordan","Nike","PUMA","Reebok",
+           "Uhlsport","Under Armour")
+items$releaseDate<-ymd(items$releaseDate)
+#out of all 12824 items, only 1932 items release after 2017-10-01
+item_af<-subset(items,releaseDate!="2017-10-01")
+dim(item_af)
+all_b<-data.frame(table(items$brand))
+af_b<-data.frame(table(item_af$brand))
+pers_b<-merge(all_b,af_b,by="Var1")
+names(pers_b)<-c("brand","all","after1001")
+pers_b[,-1]<-lapply(pers_b[,-1],function(x) x/sum(x))
+#bigbr_b<-c("adidas","Jako","Converse","Erima","Jordan","Nike","PUMA","Reebok","Under Armour")
+#pers_b_bg<-subset(pers_b,brand==bigbr_b)
+pers_melt = melt(pers_b, id.vars = 'brand')
+#the persentage of overall items/items that released after 2017-10-01 for each brand.
+ggplot(pers_melt, aes(fill=brand, y=value, x=variable)) + 
+  geom_bar(position="dodge", stat="identity")
+
+```
+
+#price
+To kind of "standardize" prices, I use everyday prices divided by the rrp of each item
+```{r prices}
+prices %>% gather(date, price, -pid, -size) %>%
+  mutate(date = gsub("X", "", date) %>% ymd()) -> prices_long
+
+item_pricelong<-full_join(items,prices_long,by=c("pid","size"))
+item_pricelong$releaseDate<-ymd(item_pricelong$releaseDate)
+item_pricelong$date<-ymd(item_pricelong$date)
+#only subcategory and price has NAs#
+apply(item_pricelong,2,function(x) sum(is.na(x))) 
+
+train$date<-ymd(train$date)
+train_long<-full_join(train,prices_long,by=c("pid","size","date"))
+apply(train_long,2,function(x) sum(is.na(x)))
+
+all_long<-full_join(train,item_pricelong,by=c("pid","size","date"))
+dim(all_long)
+apply(all_long,2,function(x) sum(is.na(x)))
+all_long$units[is.na(all_long$units)] <- 0
+#all_long$price[is.na(all_long$price)] <- 0
+
+all_long$date<-ymd(all_long$date)
+all_long$releaseDate<-ymd(all_long$releaseDate)
+
+##########items that release after 2017-10-01
+after_long<-subset(all_long, releaseDate!="2017-10-01")
+apply(after_long,2,function(x) sum(is.na(x)))
+after_long$perPrice<-after_long$price/after_long$rrp
+
+discount<-function(v){
+  NonNAindex <- which(!is.na(v))
+  v_new<-v[NonNAindex]
+  n<-length(v_new)
+  ave<-sum(v_new)/n
+  return(ave)
+}
+
+after_long$mainCategory<-as.factor(after_long$mainCategory)
+totalsale<-ddply(after_long, .(date, mainCategory), summarize, sale_t = sum(units))
+totalsale$logsale<-log(totalsale$sale_t)
+totalsale$logsale[which(!is.finite(totalsale$logsale))] <- 0
+
+all_price_af<-ddply(after_long,.(date,mainCategory),summarize,meanPrice=discount(perPrice))
+
+ggplot(all_price_af,aes(x=date,y=meanPrice)) +
+  geom_line()+
+ facet_wrap(~ mainCategory, scales = 'free_y', ncol = 1)
+
+
+```
+
+#add items sold to price
+```{r items}
+all_sale_price<-full_join(all_price_af,totalsale,by=c("date","mainCategory"))
+
+all_sale_price$mainCategory<-as.factor(all_sale_price$mainCategory)
+#all_sale_price$category<-as.factor(all_sale_price$category)
+
+####blue lines are the mean price (in percentage of rrp), red line is log(sale)/10# 
+ggplot(all_sale_price,
+       aes(x=date)) +
+  geom_line(aes(y=logsale/10), color="red") +
+  geom_line(aes(y=meanPrice), color="blue")+
+  facet_wrap(~ mainCategory, scales = 'free_y', ncol = 1)
+
+```
+
