@@ -21,10 +21,21 @@ library(dplyr)
 library(plyr)
 library(ggplot2)
 library(tidyr)
+<<<<<<< HEAD
 #setwd("~/Documents/research/dmc2018")
 train <- fread("../../data/raw_data/train.csv")
 prices <-fread("../../data/raw_data/prices.csv")
 items <- fread("../../data/raw_data/items.csv")
+=======
+setwd("~/Dropbox/DMC")
+train <- read.csv("raw_data/train.csv", sep = "|")
+prices <- read.csv("raw_data/prices.csv", sep = "|")
+items <- read.csv("raw_data/items.csv", sep = "|")
+#Sale=read.csv("sale.csv")
+#train<-fread("train.csv",head=T) #135117#
+#prices<-fread("prices.csv",head=T) #12824*153##
+#items<-fread("items.csv",head=T) #12824*10#
+>>>>>>> 709c8a2b5312240f46af093f01c6ea9a671be829
 
 #the brand that has more than 100 items#
 bigbr<-c("adidas","Jako","Erima","Converse",

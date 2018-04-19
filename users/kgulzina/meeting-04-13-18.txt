@@ -1,0 +1,40 @@
+- Due Wednesday: what is our target variable?
+- some ingsights about the model
+- (may get advise from profs)
+- Poisson process: counting method? 
+>>> different poisson models for different clusters, wrt products 
+
+- 85% of the products won't change in price (for 4 months)
+- new products: increase
+
+
+-classification for the products >> model according their behaviour (characteristics) (wanyang)
+
+- discounts might be more important/preferable than prices 
+
+
+### spatstat ~ hierarchical model (2 parameters) >> reparametrize (mczahor)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,19 @@
+---
+title: "Data Splitting"
+author: Xiaodan Lyu
+date: Sys.Date()
+output:
+  md_document:
+    variant: markdown_github
+---
+
+```{r external-code, cashe=FALSE, echo=FALSE}
+knitr::opts_chunk$set(message = F, warning = F)
+knitr::read_chunk('data_split.r')
+```
+
+```{r splitting}
+```
+
+```{r save, eval=FALSE}
+```

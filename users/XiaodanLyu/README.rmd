@@ -8,7 +8,8 @@ output:
 ---
 
 ```{r external-code, cashe=FALSE, echo=FALSE}
-knitr::opts_chunk$set(message = F, warning = F, fig.path = 'figures/')
+knitr::opts_chunk$set(message = F, warning = F, fig.path = 'figures/', 
+                      fig.height = 9, fig.width = 10)
 knitr::read_chunk('exploration.r')
 ```
 
@@ -16,6 +17,8 @@ knitr::read_chunk('exploration.r')
 
 ## read data
 ```{r input}
+```
+```{r ggplot}
 ```
 
 ## items
@@ -31,7 +34,7 @@ knitr::read_chunk('exploration.r')
 ```
 
 ## calendar
-```{r calendar}
+```{r calendar, fig.height=7, fig.width=7}
 ```
 
 ## data join
@@ -43,7 +46,23 @@ knitr::read_chunk('exploration.r')
 ```
 ```{r rising_prices}
 ```
+```{r brand_correlation, fig.height = 7, fig.width = 7}
+```
+```{r nike&adidas, fig.height = 10}
+```
 
 ### best seller
-```{r best_seller, fig.height = 10, fig.width=10}
+```{r best_seller, fig.width=9}
+```
+
+### stock on Feb 1st
+```{r stock}
+```
+
+### sale volumes
+```{r sales}
+```
+
+### discount
+```{r discount}
 ```
