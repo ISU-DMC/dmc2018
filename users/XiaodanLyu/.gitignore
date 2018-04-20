@@ -1,3 +1,4 @@
 *.csv
 *.html
 data_clean/models/
+.httr-oauth
