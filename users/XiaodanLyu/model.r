@@ -59,7 +59,6 @@ comparison %>% glimpse
 err.MLR <- (comparison$soldOutDate.true - comparison$soldOutDate.pred) %>% abs %>% sum %>% as.numeric %>% sqrt
 sprintf("err.MLR: %.3f, err.guess: %.3f", err.MLR, err.guess)
 
-
 ## ---- solutions
 ## (1) delete-BF
 
