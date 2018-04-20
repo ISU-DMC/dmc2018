@@ -76,3 +76,24 @@ write.table(items_Jan, file = "data_clean/items_Jan.txt", sep = "|",
             row.names = FALSE, quote = FALSE, na = "")
 write.table(test_Jan, file = "data_clean/test_Jan.txt", sep = "|",
             row.names = FALSE, quote = FALSE)
+
+## ---- subpopular
+test_Jan <- read.table("data_clean/test_Jan.txt", sep = "|", header  = T)
+train_Jan <- read.table("data_clean/train_Jan.txt", sep = "|", header = T)
+## only keep items sold at least somedays
+## average: 12 days
+## median: 6 days
+## 3rd quantile: 14 days
+cutvalue <- 6
+train_Jan %>% filter(!is.na(units), units>0) %>%
+  group_by(pid, size) %>% summarise(daysale = sum(units>0, na.rm = T)) %>% 
+  filter(daysale >= cutvalue) -> key_popular
+test_Jan %>% inner_join(key_popular %>% select(-daysale), by = c("pid", "size")) -> test_Jan_popular
+train_Jan_popular <- train_Jan %>% inner_join(key_popular %>% select(-daysale), by = c("pid", "size"))
+
+## save datasets as txt file, separated by "|", missing value as empty
+write.table(train_Jan_popular, file = paste0("data_clean/popular/train_Jan_pop", cutvalue, ".txt"), sep = "|",
+            row.names = FALSE, quote = FALSE, na = "")
+write.table(test_Jan_popular, file = paste0("data_clean/popular/test_Jan_pop", cutvalue, ".txt"), sep = "|",
+            row.names = FALSE, quote = FALSE)
+
