@@ -180,6 +180,8 @@ points(data$x,data$daily_price,type='l',col='red')
 Stock
 -----
 
+Notice: there are 7616 (pid size) only having one stock.
+
 ``` r
 plot(table(items$stock),xlab='frequency')
 ```
