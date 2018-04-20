@@ -5,6 +5,7 @@ Add the names of any files you don't want to commit to the ```.gitignore``` file
 Size Generalization
 
 25-30 2/3 : 00
+
 31-35 2/3 : 0
 36-38 2/3 : 1
 39-40 2/3 : 2
