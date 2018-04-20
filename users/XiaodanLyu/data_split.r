@@ -55,7 +55,8 @@ test_Jan <- subdata %>%
 test_Jan %>% glimpse()
 test_Jan %>% summary()
 
-## training data 
+## training data, joint info about items, prices and sales 
+## sale units in January have been set as missing
 train_Jan <- subdata %>%
   full_join(stock_Jan, by = "key") %>%
   select(-key) %>%
@@ -63,9 +64,15 @@ train_Jan <- subdata %>%
 train_Jan %>% glimpse
 train_Jan %>% select(units, releaseDate, stock) %>% summary
 
+## properties of the 7409 items with the "faked" stock on 2018-01-01
+items_Jan <- train_Jan %>% select(-date, -price, -units) %>% unique
+items_Jan %>% glimpse
+
 ## ---- save
-## save datasets as txt file
+## save datasets as txt file, separated by "|", missing value as empty
 write.table(train_Jan, file = "data_clean/train_Jan.txt", sep = "|",
+            row.names = FALSE, quote = FALSE, na = "")
+write.table(items_Jan, file = "data_clean/items_Jan.txt", sep = "|",
             row.names = FALSE, quote = FALSE, na = "")
 write.table(test_Jan, file = "data_clean/test_Jan.txt", sep = "|",
             row.names = FALSE, quote = FALSE)

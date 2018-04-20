@@ -101,7 +101,8 @@ test_Jan %>% summary()
     ##  Max.   :22881                      Max.   :2018-01-31
 
 ``` r
-## training data 
+## training data, joint info about items, prices and sales 
+## sale units in January have been set as missing
 train_Jan <- subdata %>%
   full_join(stock_Jan, by = "key") %>%
   select(-key) %>%
@@ -139,8 +140,29 @@ train_Jan %>% select(units, releaseDate, stock) %>% summary
     ##  NA's   :229679
 
 ``` r
-## save datasets as txt file
+## properties of the 7409 items with the "faked" stock on 2018-01-01
+items_Jan <- train_Jan %>% select(-date, -price, -units) %>% unique
+items_Jan %>% glimpse
+```
+
+    ## Observations: 7,409
+    ## Variables: 10
+    ## $ pid          <int> 19671, 19671, 19671, 19671, 19671, 19671, 19671, ...
+    ## $ size         <chr> "39 1/3", "40", "41 1/3", "42", "42 2/3", "43 1/3...
+    ## $ color        <chr> "schwarz", "schwarz", "schwarz", "schwarz", "schw...
+    ## $ brand        <chr> "adidas", "adidas", "adidas", "adidas", "adidas",...
+    ## $ rrp          <dbl> 190.43, 190.43, 190.43, 190.43, 190.43, 190.43, 1...
+    ## $ mainCategory <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...
+    ## $ category     <int> 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2...
+    ## $ subCategory  <int> 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5...
+    ## $ releaseDate  <date> 2017-10-01, 2017-10-01, 2017-10-01, 2017-10-01, ...
+    ## $ stock        <int> 1, 2, 3, 2, 9, 3, 2, 7, 2, 1, 1, 2, 1, 4, 6, 11, ...
+
+``` r
+## save datasets as txt file, separated by "|", missing value as empty
 write.table(train_Jan, file = "data_clean/train_Jan.txt", sep = "|",
+            row.names = FALSE, quote = FALSE, na = "")
+write.table(items_Jan, file = "data_clean/items_Jan.txt", sep = "|",
             row.names = FALSE, quote = FALSE, na = "")
 write.table(test_Jan, file = "data_clean/test_Jan.txt", sep = "|",
             row.names = FALSE, quote = FALSE)
