@@ -1,0 +1,28 @@
+---
+title: "Modeling daily sales"
+author: Xiaodan Lyu
+date: Sys.Date()
+output:
+  md_document:
+    variant: markdown_github
+---
+
+```{r external-code, cashe=FALSE, echo=FALSE}
+knitr::opts_chunk$set(message = F, warning = F)
+knitr::read_chunk('model.r')
+```
+
+```{r input}
+```
+
+```{r baseline}
+```
+
+```{r MLR}
+```
+
+Possible ways to reduce Err
+
+```{r solutions}
+```
+

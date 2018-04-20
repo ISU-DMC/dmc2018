@@ -31,6 +31,7 @@
 # https://cran.r-project.org/web/packages/keras/vignettes/getting_started.html
 # (I did not try this.)
 
+
 library(keras)
 library(readr)
 library(stringr)
@@ -97,11 +98,24 @@ model <- keras_model_sequential()
 
 model %>%
   # input_shape = dim(x[i,,])
+  # adding one LSTM cell, at time t, taking input x[i,t,], and previous cell input h_{t-1}
+  # give output o_t of dim(o_t) = 128, hidden state h_t, dim(h_t) = dim(o_t),
+  # at time = t + 1, take x[i, t+1, ] and h_t, keep going till t = T of ith sample
+  # and return the last output, say o_T, an array of length 128.
+  # according to http://deeplearning.net/tutorial/lstm.html, equation (1) - (7),
+  # the number of parameters should be 128*43 * 4 + 128*128 * 4 + 128 * 4 = 88064
   layer_lstm(128, input_shape = c(maxlen, length(chars))) %>%
   # a dense layer, ref. documentation, output an array
+  # just a length(chars) X 128 matrix operation + bias then activation(linear by default)
+  # number of parameters = 128 * 43 + 43 = 5547
   layer_dense(length(chars)) %>%
   # activation layer, so that output in (0,1)^length(chars)
   layer_activation("softmax")
+
+# further remarks on this model:
+# since hidden states are not passed through, we shall not expect 
+# this model to capture long term dependence between samples(sentences).
+# ref: http://philipperemy.github.io/keras-stateful-lstm/, "Questions and Answers" part.
 
 summary(model)
 
@@ -173,6 +187,11 @@ on_epoch_end <- function(epoch, logs) {
       
     }
     
+# remarks on the prediction:
+# it seems that the state is not passed through each prediction,
+# i.e., once finishing a prediction, next time for a new prediction,
+# what is the value of the state?
+    
     cat(generated)
     cat("\n\n")
     
@@ -188,7 +207,6 @@ print_callback <- callback_lambda(on_epoch_end = on_epoch_end)
 # batch_size = # of sample per gradient update
 # epochs = maxiter
 # should be fairly quick if you run this with some GPU
-# 1 epoch takes ~11sec on my laptop.
 model %>% fit(
   x, y,
   batch_size = 64,
