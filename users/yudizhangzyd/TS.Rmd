@@ -1,0 +1,140 @@
+---
+title: "TS"
+author: "Yudi Zhang"
+date: "4/20/2018"
+output: 
+  md_document:
+    variant: markdown_github
+---
+
+```{r external-code, cashe=FALSE, echo=FALSE}
+knitr::opts_chunk$set(message = F, warning = F, fig.path = 'figures/')
+```
+
+```{r, cache=TRUE}
+## ---- input
+library(lubridate)
+library(tidyverse)
+items <- read.csv("/Users/yudi/Downloads/DMC-2018/raw_data/items.csv", sep = "|")
+View(items)
+prices <- read.csv("/Users/yudi/Downloads/DMC-2018/raw_data/prices.csv", sep = "|")
+train <- read.csv("/Users/yudi/Downloads/DMC-2018/raw_data/train.csv", sep = "|")
+
+
+test_Jan <- read.table("/Users/yudi/R projects/DMC/test_Jan.txt", sep = "|", header  = T)
+test_Jan$soldOutDate <- ymd(test_Jan$soldOutDate)
+
+## ---- baseline
+
+pred.guess <- ymd("2018-01-16")
+err.guess <- (test_Jan$soldOutDate - pred.guess) %>% abs %>% sum %>% as.numeric %>% sqrt
+sprintf("err.guess: %.3f", err.guess)
+
+train_Jan <- read.table("/Users/yudi/R projects/DMC/train_Jan.txt", sep = "|", header = T)
+## format date
+train_Jan <- train_Jan %>% 
+  mutate(date = ymd(date),
+         releaseDate = ymd(releaseDate))
+
+## only use weekday and day info from the date variable
+train_Jan_format <- train_Jan %>%
+  mutate(day = day(date),
+         weekday = wday(date),
+         subCategory = replace(subCategory, is.na(subCategory), 0)) %>%
+  mutate_at(vars(mainCategory:subCategory, day, weekday), funs(factor))
+train_Jan_format %>% summary
+
+## not using pid, size, date, releaseDate for modelling
+data_Jan <- train_Jan_format %>% filter(date < ymd("2018-01-01")) %>%
+  select(-pid, -size, -date, -releaseDate)
+data_Jan %>% glimpse
+data_Jan %>% summary
+
+```
+
+
+```{r}
+
+#date clean
+
+train <- train %>% mutate(date = ymd(date))
+items <- items %>% mutate(releaseDate = ymd(releaseDate))
+prices_long <- prices %>% gather(date, price, -pid, -size) %>%
+  mutate(date = gsub("X", "", date) %>% ymd())
+
+train <- train %>% mutate(date = ymd(date))
+items <- items %>% mutate(releaseDate = ymd(releaseDate))
+prices_long <- prices %>% gather(date, price, -pid, -size) %>%
+  mutate(date = gsub("X", "", date) %>% ymd())
+
+## join three datasets
+alldata <- prices_long %>% 
+  full_join(train, by = c("pid", "size", "date")) %>% 
+  full_join(items, by = c("pid", "size")) %>%
+  filter(date>=releaseDate-1) %>% ## only keep price info since one day before releasedate
+  mutate(units = replace(units, is.na(units) & date < ymd("2018-02-01"), 0))
+
+## key variable for identifying item
+alldata <- alldata %>% mutate(key = paste(pid, size, sep = " - "))
+## check sales before and in January
+sale.beforeJan <- alldata %>% filter(date < ymd("2018-01-01")) %>%
+  group_by(key) %>% 
+  summarise(nsale.beforeJan = sum(units))
+sale.Jan <- alldata %>% filter(date >= ymd("2018-01-01")) %>%
+  group_by(key) %>%
+  summarise(nsale.Jan = sum(units, na.rm = T))
+sale.beforeJan %>% full_join(sale.Jan, by = "key") %>%
+  mutate(nsale.beforeJan = replace(nsale.beforeJan, is.na(nsale.beforeJan), 0)) %>%
+  filter(nsale.beforeJan==0 | nsale.Jan == 0) -> items.aside
+
+## put aside those items not both sold before and in January
+## put aside obs for February
+subdata <- alldata %>% filter(!(key %in% items.aside$key), 
+                              date < ymd("2018-02-01")) %>% select(-stock)
+## randomly assign stock for Jan, and save true sold-out dates under the assigned stock
+set.seed(180201)
+stock_Jan <- subdata %>% 
+  left_join(sale.Jan, by = "key") %>%
+  group_by(key) %>%
+  summarise(stock = sample.int(n = nsale.Jan, size = 1))
+
+##Analyze time seris by maincategory and category
+train.ts <- train_Jan_format %>% group_by(mainCategory, category, date) %>% mutate(y = sum(units)) %>% filter (date < ymd("2018-01-01")) %>% select(mainCategory,category, date, y) %>% unique() 
+
+names(train.ts) <- c("mainCategory","category", "ds", "y")
+```
+
+
+```{r}
+Jan.actual.sale <- subdata %>% full_join(stock_Jan, by = "key") %>%
+select(-key) %>% group_by(mainCategory, category, date) %>% summarise(y = sum(units)) %>% filter (date >= ymd("2018-01-01")) %>% select(mainCategory,category, date, y) %>% unique() 
+```
+
+```{r}
+##TS based on xgboost
+library(forecastxgb)
+library(Metrics)
+
+cat.fc <- function(maincat, cat){
+
+     
+ cat.train.ts <- subset(train.ts, category == cat & mainCategory == maincat)[,-c(1,2)]
+
+
+model <- xgbar(ts(cat.train.ts[,2]), trend_method = "differencing", seas_method = "fourier")
+cat.fc <- forecast(model, h = 31)
+
+data.frame(mainCategory=maincat, category = cat, yhat = summary(cat.fc)$`Point Forecast`)
+                   
+}
+
+
+ts.pre <- rbind(cat.fc(maincat = 1, cat = 2),cat.fc(maincat = 1, cat = 7),cat.fc(maincat = 1, cat = 37),cat.fc(maincat = 9, cat = 10),cat.fc(maincat = 9, cat = 18),cat.fc(maincat = 9, cat = 36),cat.fc(maincat = 9, cat = 37),cat.fc(maincat = 15, cat = 16),cat.fc(maincat = 15, cat = 24),cat.fc(maincat = 15, cat = 30),cat.fc(maincat = 15, cat = 33)) 
+
+compare.Jan <- left_join(ts.pre, Jan.actual.sale, by = c("mainCategory", "category"))
+
+mse(compare.Jan$y,compare.Jan$yhat)
+
+```
+
+
