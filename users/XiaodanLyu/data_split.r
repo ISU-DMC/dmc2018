@@ -97,3 +97,17 @@ write.table(train_Jan_popular, file = paste0("data_clean/popular/train_Jan_pop",
 write.table(test_Jan_popular, file = paste0("data_clean/popular/test_Jan_pop", cutvalue, ".txt"), sep = "|",
             row.names = FALSE, quote = FALSE)
 
+## rare sale products
+## only ever sold for one day before Jan
+train_Jan %>% filter(!is.na(units), units>0) %>%
+  group_by(pid, size) %>% summarise(daysale = sum(units>0, na.rm = T)) %>% 
+  filter(daysale == 1) -> key_cold
+test_Jan %>% inner_join(key_cold %>% select(-daysale), by = c("pid", "size")) -> test_Jan_cold
+train_Jan_cold <- train_Jan %>% inner_join(key_cold %>% select(-daysale), by = c("pid", "size"))
+items_cold <- train_Jan_cold %>% select(-date, -price, -units) %>% unique
+write.table(test_Jan_cold, file = "C:/Users/lyux/Dropbox/DMC 2018/ForYuchen-冷门产品/test_Jan_cold.txt", sep = "|",
+            row.names = FALSE, quote = FALSE, na = "")
+write.table(train_Jan_cold, file = "C:/Users/lyux/Dropbox/DMC 2018/ForYuchen-冷门产品/train_Jan_cold.txt", sep = "|",
+            row.names = FALSE, quote = FALSE, na = "")
+write.table(items_cold, file = "C:/Users/lyux/Dropbox/DMC 2018/ForYuchen-冷门产品/items_cold.txt", sep = "|",
+            row.names = FALSE, quote = FALSE, na = "")
