@@ -187,3 +187,10 @@ plot(table(items$stock),xlab='frequency')
 ```
 
 ![](figures/stock_size-1.png)
+Random Guess Model: loss function 244
+-------------------------------------
+![](figures/ramdomguess.pdf)
+
+PureWaitingtime: loss function 242
+----------------------------------
+![](figures/pureWaitingtime.pdf)
