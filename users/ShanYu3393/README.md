@@ -180,8 +180,19 @@ points(data$x,data$daily_price,type='l',col='red')
 Stock
 -----
 
+Notice: there are 7616 (pid size) only having one stock.
+
 ``` r
 plot(table(items$stock),xlab='frequency')
 ```
 
 ![](figures/stock_size-1.png)
+
+
+Random Guess Model: loss function 244
+-------------------------------------
+![](figures/RandomGuess.png)
+
+PureWaitingtime: loss function 242
+----------------------------------
+![](figures/pureWaitingTime.png)

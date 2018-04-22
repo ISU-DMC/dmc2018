@@ -29,5 +29,6 @@ knitr::read_chunk('Data_Explore.R')
 ```
 
 ## Stock
+Notice: there are 7616 (pid size) only having one stock.
 ```{r stock_size}
 ```

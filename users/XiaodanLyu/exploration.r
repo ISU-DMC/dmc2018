@@ -43,12 +43,17 @@ items %>% group_by(pid) %>%
 ## Q: How many of the items released before 2017-10-01? about 85%
 mean(items$releaseDate == ymd("2017-10-01"))
 ## Q: category decode
+items %>% group_by(subCategory) %>%
+  summarise(sizes = paste(unique(size), collapse = ","), 
+            rrps = paste(unique(rrp), collapse = ","), 
+            brands = paste(unique(brand), collapse = ",")) -> items.subcat
 items %>%
   ggplot(aes(x = subCategory, y = rrp, fill = category), color = FALSE) +
   scale_fill_brewer(palette = "Paired") + scale_y_log10() +
   geom_boxplot(outlier.size = .5) + guides(fill = FALSE) +
   geom_hline(yintercept = 100, color = "red", linetype = 2) +
-  facet_wrap(~ctgroup, scales = "free", nrow = 3) + 
+  geom_hline(yintercept = 10, linetype = 2) +
+  facet_wrap(~ctgroup, scales = "free_x", nrow = 3) + 
   theme_mine()
 
 ## ---- train
@@ -131,10 +136,12 @@ left_join(prices_long, train, by = c("pid", "size", "date")) %>%
   left_join(items, by = c("pid", "size")) %>%
   filter(date>=releaseDate-1) %>% ## only keep price info since one day before releasedate
   mutate(units = replace(units, is.na(units) & date < ymd("2018-02-01"), 0),
+         key = paste(pid, size, sep = " - "),
          discount = (rrp-price)/rrp*100) %>% 
   group_by(pid, size) %>% 
-  mutate(diffprice = price - lag(price)) %>%
-  mutate(reldiffprice = diffprice/lag(price)*100) -> alldata
+  mutate(diffprice = price - lag(price),
+         reldiffprice = diffprice/lag(price)*100) %>%
+  ungroup -> alldata
 alldata %>% glimpse
 ## Q: all prices lower than rrp? Yes
 summary(alldata$discount)
@@ -169,10 +176,10 @@ items.brand %>% group_by(no.brand, category, ctgroup) %>% tally %>% ungroup %>%
   ggplot(aes(x = no.brand, y = n, fill = category)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_hline(yintercept = 10, linetype = 2) +
-  geom_hline(yintercept = 100, linetype = 2) +
+  geom_hline(yintercept = 100, linetype = 2, col = "red") +
   scale_fill_brewer(palette = "Paired") + scale_y_log10() +
   labs(y = "# of items") +
-  facet_wrap(~ctgroup, scales = "free", nrow = 3) +
+  facet_wrap(~ctgroup, scales = "free_x", nrow = 3) +
   theme_mine()
 ## stock by brand
 ## first 12 brands with total stock less than 15
@@ -186,8 +193,8 @@ items.brand %>% mutate(no.brand = fct_reorder(no.brand, stock, sum)) %>%
   scale_fill_brewer(palette = "Paired") + scale_y_log10() + 
   geom_bar(stat = "identity", position = "dodge") +
   geom_hline(yintercept = 10, linetype = 2) +
-  geom_hline(yintercept = 500, linetype = 2) +
-  facet_wrap(~ctgroup, nrow = 3, scales = "free") +
+  geom_hline(yintercept = 1000, linetype = 2, col = "red") +
+  facet_wrap(~ctgroup, nrow = 3, scales = "free_x") +
   theme_mine() 
 
 alldata %>% filter(brand %in% c("Sells", "Kempa", "Onitsuka")|pid == 12742, units > 0) %>% glimpse
@@ -202,7 +209,8 @@ items.brand %>%
   geom_bar(stat = "identity", position = "dodge") +
   ylab("median recommended retail price") +
   geom_hline(yintercept = 25, linetype = 2) +
-  facet_wrap(~ctgroup, nrow = 3, scales = "free") +
+  geom_hline(yintercept = 100, linetype = 2, col = "red") +
+  facet_wrap(~ctgroup, nrow = 3, scales = "free_x") +
   scale_fill_brewer(palette = "Paired") +
   guides(color = FALSE) + theme_mine()
 ## sale volumes by brand during Oct-Jan
@@ -213,16 +221,20 @@ alldata %>% group_by(brand, category, ctgroup) %>%
   ggplot(aes(x = brand, y = n, fill = category)) +
   geom_bar(stat = "identity", position = "dodge") + 
   geom_hline(yintercept = 10, linetype = 2) +
+  geom_hline(yintercept = 1000, linetype = 2, col = "red") +
   scale_fill_brewer(palette = "Paired") + scale_y_log10() +
   labs(y = "sale volumes during Oct-Jan by brand") +
-  facet_wrap(~ctgroup, scales = "free", nrow = 3) +
+  facet_wrap(~ctgroup, scales = "free_x", nrow = 3) +
   theme_mine()
 
 ## ---- rising_prices
 alldata %>% group_by(pid, size, brand, ctgroup) %>% 
   summarise(yn.priceincr = any(reldiffprice > 0, na.rm = T),
             yn.newrelease = any(releaseDate > ymd("2017-10-01")),
-            yn.pricechange = any(reldiffprice != 0, na.rm = T)) %>%
+            yn.pricechange = any(reldiffprice != 0, na.rm = T),
+            nsale = sum(units, na.rm = T),
+            avg.discount = mean(discount),
+            pho = cor(units, discount, use = "complete.obs")) %>%
   ungroup -> check
 ## Q: changing prices only happen to new released products? Yes
 ## Q: all new released products have changing prices? No
@@ -241,7 +253,7 @@ brands.check %>% select(ctgroup, nanyincr:no.brand) %>%
   gather(group, value, -no.brand, -ctgroup) %>% 
   mutate(group = fct_relevel(group, "nalldecr", "nanyincr", after = Inf)) %>%
   ggplot(aes(x = no.brand, y = value, fill = group)) + scale_y_sqrt() +
-  facet_wrap(~ctgroup, scales = "free", nrow = 3) +
+  facet_wrap(~ctgroup, scales = "free_x", nrow = 3) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "# of new released products by brand", fill = "") + 
   theme_mine()
@@ -327,8 +339,12 @@ items %>%
   geom_boxplot(outlier.size = 0.5) +
   geom_hline(yintercept = 10, linetype = 2) +
   scale_fill_brewer(palette = "Paired") +
-  facet_wrap(~ctgroup, nrow = 3, scales = "free") +
+  facet_wrap(~ctgroup, nrow = 3, scales = "free_x") +
   scale_y_log10() + theme_mine()
+
+items %>% mutate(yn.onestock = (stock==1)) %>%
+  left_join(check, by = c("pid", "size", "ctgroup", "brand")) %>% 
+  select(yn.onestock, yn.pricechange) %>% table()
 
 ## ---- sales
 alldata %>% group_by(pid, size, subCategory) %>%
@@ -348,13 +364,30 @@ alldata %>% group_by(pid, size, subCategory) %>%
 alldata %>% inner_join(check, by = c("pid", "size", "brand", "ctgroup")) %>%
   # mutate(category = paste(mainCategory, category, sep = "-")) %>%
   filter(yn.pricechange) %>% group_by(date, category, ctgroup) %>%
-  summarise(discount = mean(discount)) %>% ungroup %>%
+  summarise(discount = median(discount)) %>% ungroup %>%
   ggplot(aes(x = date, y = discount, color = factor(category))) + 
-  geom_line(size = rel(1)) + facet_grid(ctgroup~.) +
+  ggtitle("median discount by category and date") + 
+  geom_line(size = rel(1)) + 
+  geom_hline(yintercept = 25, linetype = 2) +
+  facet_grid(ctgroup~.) +
+  scale_y_continuous(limits = c(0, 75)) +
   scale_color_brewer(palette = "Paired") + theme_bw(base_size = 15) +
   geom_vline(xintercept = ymd("2017-10-31"), linetype = 2, size = rel(0.8)) +
   geom_vline(xintercept = ymd("2017-11-24"), linetype = 2, size = rel(0.8)) +
   geom_vline(xintercept = ymd("2018-02-14"), linetype = 2, size = rel(0.8))
+
+## correlation between sale-volume and discount
+tb <- items %>% left_join(check, by = c("pid", "size", "brand", "ctgroup"))
+tb %>% arrange(desc(abs(pho))) %>% glimpse
+## pho only available for items with changing prices before Feb 1st
+tb %>% filter(!is.na(pho)) %>% 
+  ggplot(aes(x = subCategory, y = pho)) +
+  geom_hline(yintercept = 0, color = "red", linetype = 2) +
+  geom_boxplot(aes(fill = category), outlier.size = .5) +
+  scale_fill_brewer(palette = "Paired") +
+  facet_wrap(~ctgroup, nrow = 3, scales = "free_x") +
+  labs(title = "correlation between sale-volume and discount by item") +
+  theme_mine()
 
 ## old products, constant prices
 ## 1-2-27, nitem = 9, no size, no-discount, cheap, shoelaces?
@@ -364,8 +397,9 @@ alldata %>% inner_join(check, by = c("pid", "size", "brand", "ctgroup")) %>%
   ggplot(aes(x = subCategory, y = discount, fill = category), color = FALSE) +
   scale_fill_brewer(palette = "Paired") +
   geom_boxplot(outlier.size = 0.5) + guides(fill = FALSE) +
-  facet_wrap(~ctgroup, scales = "free", nrow = 3) +
-  geom_hline(yintercept = 40, color = "red", linetype = 2) +
+  facet_wrap(~ctgroup, scales = "free_x", nrow = 3) +
+  scale_y_continuous(limits = c(0, 100)) +
+  geom_hline(yintercept = 25, color = "red", linetype = 2) +
   theme_mine()
 
 ## new released products, constant prices
@@ -374,8 +408,10 @@ alldata %>% inner_join(check, by = c("pid", "size", "brand", "ctgroup")) %>%
   filter(yn.newrelease, !yn.pricechange, !duplicated(cbind(pid, size))) %>% 
   ggplot(aes(x = subCategory, y = discount, fill = category), color = FALSE) +
   scale_fill_brewer(palette = "Paired") +
+  scale_y_continuous(limits = c(0, 100)) +
   geom_boxplot(outlier.size = 0.5) + guides(fill = FALSE) +
-  facet_wrap(~ctgroup, scales = "free", nrow = 3) +
+  geom_hline(yintercept = 25, color = "red", linetype = 2) +
+  facet_wrap(~ctgroup, scales = "free_x", nrow = 3) +
   theme_mine()
 
 
