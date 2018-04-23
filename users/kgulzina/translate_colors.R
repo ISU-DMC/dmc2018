@@ -14,6 +14,11 @@ train$month <- month(ymd(train$date))
 train$day <- day(ymd(train$date))
 train$weekday <- weekdays(ymd(train$date))
 
+# translate to english
+levels(items$color) <- c("beige", "blue", "brown", "yellow", "gold", 
+                         "gray", "green", "khaki", "purple", "orange", 
+                         "dark_pink", "pink", "red", "black", "silver", 
+                         "turquoise", "white")
 
 
 # chosen: Color 
