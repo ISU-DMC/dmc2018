@@ -1,3 +1,3 @@
 ### Personal space for YushanGu
 
-Add the names of any files you don't want to commit to the ```.gitignore``` file in this directory.
+I'm trying to devide each item's daily sale by total daily sale in each subcategory. Use this num of percentage instead of units unmber. 
