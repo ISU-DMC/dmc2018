@@ -80,7 +80,7 @@ items %>% left_join(prices_long, by = c("pid", "size")) %>%
 ## Q: before releasedate, any non-missing prices? Yes 
 items %>% left_join(prices_long, by = c("pid", "size")) %>% 
   filter(date < releaseDate) %>% select(price) %>% is.na %>% any
-## Q: any charateristic for a price before release date? 
+## Q: any charateristic for price before release date? 
 ## released after 2017-10-01 , one-day earlier pre-sale advertising price 
 items %>% left_join(prices_long, by = c("pid", "size")) %>% 
   filter(!is.na(price)) %>% group_by(pid, size) %>%
@@ -232,8 +232,17 @@ alldata %>% group_by(pid, size, brand, ctgroup) %>%
   summarise(yn.priceincr = any(reldiffprice > 0, na.rm = T),
             yn.newrelease = any(releaseDate > ymd("2017-10-01")),
             yn.pricechange = any(reldiffprice != 0, na.rm = T),
+            n.pricechange = sum(reldiffprice != 0, na.rm  = T),
+            n.priceincr = sum(reldiffprice > 0, na.rm = T),
+            n.priceconst  = sum(reldiffprice == 0, na.rm = T),
             nsale = sum(units, na.rm = T),
+            med.sale = median(units, na.rm = T),
+            mean.sale = mean(units, na.rm = T),
+            n.discount = sum(discount > 0, na.rm = T),
             avg.discount = mean(discount),
+            med.discount = median(discount),
+            avg.price = mean(price),
+            med.price = mean(price),
             pho = cor(units, discount, use = "complete.obs")) %>%
   ungroup -> check
 ## Q: changing prices only happen to new released products? Yes

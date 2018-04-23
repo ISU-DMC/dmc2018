@@ -18,10 +18,21 @@ theme_mine <- function(){
   theme_bw(base_size = 15)  +
     theme(axis.text.x = element_text(angle = 45))
 }
+ax <- list(
+  showline = TRUE,
+  mirror = "ticks",
+  zeroline = FALSE,
+  type = "log",
+  tickfont = list(size = 15)
+)
 test_Jan <- read.table("test_Jan.txt", sep = "|", header  = T)
 test_Jan$soldOutDate <- ymd(test_Jan$soldOutDate)
 pred.guess <- ymd("2018-01-16")
 err.guess <- (test_Jan$soldOutDate - pred.guess) %>% abs %>% sum %>% as.numeric %>% sqrt
+train_Jan <- read.table("train_Jan.txt", sep = "|", header = T)
+train_Jan %>% group_by(pid, size, stock) %>% 
+  summarise(daysold = sum(units>0, na.rm = T)) %>% ungroup -> daysold_key
+
 
 ui <- fluidPage(
   
@@ -44,7 +55,17 @@ ui <- fluidPage(
     # Diagnosis Plot
     mainPanel(
       tabsetPanel(
-        tabPanel("Plot", plotlyOutput("Plot", height = "600px")),
+        tabPanel("Err_Heatmap", plotlyOutput("heatmap", height = "600px"), hr()),
+        tabPanel("Err_Scatter", br(),
+                 p("err.sum, err.med, err.mean: sum, median, mean of absolute error grouping by
+                   stock and daysold (number of days items being sold)."),
+                 radioButtons("color_var", "Color by Err.",
+                              choices = c("sum" = "err.sum",
+                                          "median" = "err.med",
+                                          "mean" = "err.mean"),
+                              selected = "err.sum", inline = TRUE),
+                 plotlyOutput("scatter", height = "600px"),
+                 hr()),
         tabPanel("LeaderBoard", br(), dataTableOutput("tb_board"))
         # tabPanel("GoogleForms", 
         #          tags$iframe(id = "googleform",
@@ -67,7 +88,7 @@ server <- function(input, output) {
     
     req(input$file)
     
-    preds_Jan <- read.csv(input$file$datapath, header = TRUE, sep = "|")
+    preds_Jan <- read.table(input$file$datapath, header = TRUE, sep = "|")
     preds_Jan$soldOutDate <- ymd(preds_Jan$soldOutDate)
     comparison <- left_join(test_Jan, preds_Jan, by = c("pid", "size"), suffix = c(".true", ".pred"))
     
@@ -85,7 +106,8 @@ server <- function(input, output) {
   })
   
   
-  output$Plot <- renderPlotly({
+  output$heatmap <- renderPlotly({
+    
     comparison <- comparison()
     tb2way <- comparison %>% 
       mutate(truth = day(soldOutDate.true), pred = day(soldOutDate.pred),
@@ -104,17 +126,42 @@ server <- function(input, output) {
     
   })
   
+  output$scatter <- renderPlotly({
+    
+    comparison <- comparison()
+    comparison_err <- comparison %>% left_join(daysold_key, by = c("pid", "size")) %>%
+      mutate(err = abs(soldOutDate.true - soldOutDate.pred) %>% as.numeric)
+    comparison_err_aggregate <- comparison_err %>% group_by(daysold, stock) %>%
+      summarise(err.sum = sum(err), n = n(), err.med = median(err), err.mean = mean(err))
+   
+    p <- ifelse(input$color_var == "err.sum", 1/3, 1)
+    color_title <- ifelse(input$color_var == "err.sum", "err.sum^(1/3)", input$color_var)
+    color_pal <- leaflet::colorFactor("Reds", domain = 0:30)
+    
+    plot_ly(x = ~stock, y = ~daysold, data = comparison_err_aggregate,
+            text = ~sprintf("n = %.0f, err.sum: %.0f, err.med: %.0f, err.mean: %.0f", 
+                            n, err.sum, err.med, err.mean),
+            marker = list(colorbar = list(title = color_title)),
+            # color = ~err.sum^(1/3),
+            color = ~get(input$color_var)^p,
+            colors = color_pal(0:30),
+            size = ~n^(1/3),
+            type = "scatter", mode = "markers"
+    ) %>% layout(xaxis = ax, yaxis = ax)
+    
+  })
+  
   
   output$tb_board <- renderDataTable({
-    board <- read.csv("leaderboard.csv")
+    board <- read.csv("leaderboard - subset_train_Jan.csv")
     # library(googlesheets)
     # get.board <- gs_title("leaderboard")
     # board <- get.board %>%
     #   gs_read(ws = "board")
-    datatable(board %>% arrange(Error), class = "compact display nowrap",
+    datatable(board %>% arrange(desc(Score)), class = "compact display nowrap",
               options = list(pageLength = 25)) %>%
-      formatStyle("Model", target = "row", backgroundColor = styleEqual("Guess", "yellow")) %>%
-      formatStyle('Error',  color = 'red', backgroundColor = 'orange', fontWeight = 'bold')
+      # formatStyle("Model", target = "row", backgroundColor = styleEqual("Guess", "yellow")) %>%
+      formatStyle('Score',  color = 'red', backgroundColor = 'orange', fontWeight = 'bold')
   })
   
 }

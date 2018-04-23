@@ -83,13 +83,14 @@ lasso_1c <- glmnet(x = x_train,
                    y = data_Jan$units) 
 
 ## (1d) k-NN
+## poor results, far underestimate, k = ? need more useful features
 write.table(data_Jan %>% select(-date),
             file = paste0("C:/Users/lyux/Dropbox/DMC 2018/ForZijian-MLAlgorithm/train_Jan_", Sys.Date(), ".txt"),
             sep = "|", row.names = FALSE, quote = FALSE, na = "")
 write.table(test_Jan_format,
             file = paste0("C:/Users/lyux/Dropbox/DMC 2018/ForZijian-MLAlgorithm/test_Jan_", Sys.Date(), ".txt"),
             sep = "|", row.names = FALSE, quote = FALSE, na = "")
-kNN_output <- read.csv("/Users/lyux/Dropbox/DMC 2018/ForZijian-MLAlgorithm/testPreUnits.csv", sep = "|")
+kNN_output <- read.csv("/Users/lyux/Dropbox/DMC 2018/ForZijian-MLAlgorithm/testPreUnits_scale.csv", sep = "|")
 kNN <- kNN_output %>% select(pid, size, date, stock, pred = preUnits) %>% mutate(date = ymd(date))
 pred_Jan <- kNN %>%
   mutate(units = pred) %>% 
@@ -97,7 +98,7 @@ pred_Jan <- kNN %>%
   mutate(cumunits = cumsum(units)) %>% ungroup %>%
   mutate(yn.soldout = (cumunits >= stock)) %>%
   group_by(pid, size) %>%
-  summarise(soldOutDate = ymd("2018-01-31") - sum(yn.soldout) + 1) %>%
+  summarise(soldOutDate = ymd("2018-02-01") - sum(yn.soldout)) %>%
   ungroup %>%
   mutate(soldOutDate = replace(soldOutDate, soldOutDate == ymd("2018-02-01"), ymd("2018-01-16")))
 
