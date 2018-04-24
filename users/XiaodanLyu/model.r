@@ -74,7 +74,7 @@ data_Jan_1b <- data_Jan_nBF %>% mutate(discount = (rrp-price)/rrp*100)
 MLR_1b <- lm(units~., data = data_Jan_1b %>% select(-date))
 summary(MLR_1b)$r.squared
 pred.MLR_1b <- MLR_1b %>% predict(newdata = test_Jan_format %>% 
-                                mutate(discount = (rrp-price)/rrp*100)) ## some negative values
+                                    mutate(discount = (rrp-price)/rrp*100)) ## some negative values
 
 ## (1c) glmnet
 library(glmnet)
@@ -112,14 +112,72 @@ pred_Jan <- kNN %>%
 ## 
 
 ## (3) adding more features
-## product age for example to use info from releaseDate
-## 19 is the 1st quantile of ages of new products
-# train_Jan %>% filter(releaseDate > ymd("2017-10-01"), date >= releaseDate) %>% 
-#   mutate(age = as.numeric(date-releaseDate)) %>% select(age) %>% summary
-# train_Jan_format <- train_Jan %>%
-#   mutate(base_age = ifelse(releaseDate == ymd("2017-10-01"), 19, 0),
-#          age = as.numeric(date - releaseDate) + base_age) %>%
-#   select(-releaseDate, -date, -base_age)
-# train_Jan_format %>% glimpse
+feature.date <- read.csv("../../../DMC 2018/Data/Features/feature_date_Lyu_2018-04-23.csv")
+feature.date <- feature.date[,-1]
+feature.date %>% glimpse
+feature.item <- read.csv("../../../DMC 2018/Data/Features/feature_items_Lyu_2018-04-23.csv")
+feature.item <- feature.item[,-1]
+feature.item %>% glimpse  
 
-  
+feature <- feature.date %>% left_join(feature.item, by = c("pid", "size"))
+feature$date <- ymd(feature$date)
+feature_Jan <- feature %>% filter(key %in% paste(test_Jan$pid, test_Jan$size, sep = " - "))
+names(feature_Jan)
+lm(units~., data = feature_Jan %>% filter(date<ymd("2018-01-01")) %>%
+     select(-date, -key, -pid, -size, -bestseller.oneday.x, -bestseller.oneday.y,
+            -releaseDate, -price.beforeRD, -discount.beforeRD)) -> MLR.feature.422
+summary(MLR.feature.422)$r.squared
+pred.MLR <- MLR.feature.422 %>% predict(
+  newdata = feature_Jan %>% filter(date >= ymd("2018-01-01"), date < ymd("2018-02-01"))) 
+pred_Jan <- feature_Jan %>% filter(date >= ymd("2018-01-01"), date < ymd("2018-02-01")) %>% 
+  mutate(units = pmax(0, pred.MLR)) %>% 
+  group_by(pid, size) %>%
+  mutate(cumunits = cumsum(units)) %>% ungroup %>%
+  mutate(yn.soldout = (cumunits >= stock)) %>%
+  group_by(pid, size) %>%
+  summarise(soldOutDate = ymd("2018-02-01") - sum(yn.soldout)) %>%
+  ungroup %>%
+  mutate(soldOutDate = replace(soldOutDate, soldOutDate == ymd("2018-02-01"), ymd("2018-01-16")))
+
+MLR.422.sig <- lm(units~., data = feature_Jan %>% filter(date<ymd("2018-01-01")) %>%
+                    select(units, age, discount, diffprice, reldiffprice, day, weekday,
+                           is.BF, is.unityday, is.reformday, mean.sale, avg.discount))
+
+## Time-Series By Category
+setwd("C:/Users/lyux/Dropbox/DMC 2018/Prediction")
+TS_Category <- read.table(file = "prediction_Jan_Yudi.txt", sep = "|", header = T)
+items <- read.csv("../Data/raw_data/items.csv", sep = "|")
+items %>% group_by(category, mainCategory) %>% summarise(n = n()) -> count_cat
+TS_Category_Unique <- TS_Category %>% select(date, mainCategory, category, sumunits = units) %>% unique()
+TS_Category_Unique %>% left_join(count_cat, by = c("category", "mainCategory")) %>%
+  mutate(units = sumunits/n) -> TS_Category_Mean_Unique
+
+write.table(TS_Category_Mean_Unique, file = "TS_Category_Yudi.txt", sep = "|", quote = F, row.names = F)
+
+ggplot(data = TS_Category_Mean_Unique %>%
+         mutate(key = paste(mainCategory, category, sep = "-")),
+       mapping = aes(x = day(date), y = units, color = key)) +
+  geom_point() + geom_line() + scale_color_brewer(palette = "Paired") +
+  # scale_y_log10() +
+  facet_grid(mainCategory~.)
+
+TS_Category_Mean_Unique %>% group_by(mainCategory, category) %>% 
+  mutate(cumunits = cumsum(units)) %>% glimpse
+
+items_Jan <- read.table("../Data/items_Jan.txt", sep = "|", header = T)
+TS_Category_Mean_Unique %>% inner_join(items_Jan, by = c("mainCategory", "category")) %>%
+  mutate(date = ymd(date)) -> pred_TS_category
+
+pred_TS_category %>% group_by(pid, size) %>%
+  mutate(cumunits = cumsum(units)) %>% ungroup %>%
+  mutate(yn.soldout = (cumunits >= stock)) %>%
+  group_by(pid, size) %>%
+  summarise(soldOutDate = ymd("2018-02-01") - sum(yn.soldout)) %>%
+  ungroup %>%
+  mutate(soldOutDate = replace(soldOutDate, soldOutDate == ymd("2018-02-01"), ymd("2018-01-16"))) -> pred_Jan
+
+comparison %>% left_join(items, by = c("pid", "size")) %>%
+  mutate(err = abs(as.numeric(soldOutDate.true - soldOutDate)),
+         key = paste(mainCategory, category, sep = "-")) %>%
+  ggplot(aes(x = key, y = err)) + geom_boxplot()
+
