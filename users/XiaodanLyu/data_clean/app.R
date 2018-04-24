@@ -27,8 +27,8 @@ ax <- list(
 )
 test_Jan <- read.table("test_Jan.txt", sep = "|", header  = T)
 test_Jan$soldOutDate <- ymd(test_Jan$soldOutDate)
-pred.guess <- ymd("2018-01-16")
-err.guess <- (test_Jan$soldOutDate - pred.guess) %>% abs %>% sum %>% as.numeric %>% sqrt
+# pred.guess <- ymd("2018-01-16")
+# err.guess <- (test_Jan$soldOutDate - pred.guess) %>% abs %>% sum %>% as.numeric %>% sqrt
 train_Jan <- read.table("train_Jan.txt", sep = "|", header = T)
 train_Jan %>% group_by(pid, size, stock) %>% 
   summarise(daysold = sum(units>0, na.rm = T)) %>% ungroup -> daysold_key
@@ -90,7 +90,7 @@ server <- function(input, output) {
     
     preds_Jan <- read.table(input$file$datapath, header = TRUE, sep = "|")
     preds_Jan$soldOutDate <- ymd(preds_Jan$soldOutDate)
-    comparison <- left_join(test_Jan, preds_Jan, by = c("pid", "size"), suffix = c(".true", ".pred"))
+    comparison <- inner_join(test_Jan, preds_Jan, by = c("pid", "size"), suffix = c(".true", ".pred"))
     
     comparison
     
@@ -99,6 +99,8 @@ server <- function(input, output) {
   output$Err <- renderPrint({
     comparison <- comparison()
     err.model <- (comparison$soldOutDate.true - comparison$soldOutDate.pred) %>% 
+      abs %>% sum %>% as.numeric %>% sqrt
+    err.guess <- (comparison$soldOutDate.true - ymd("2018-01-16")) %>% 
       abs %>% sum %>% as.numeric %>% sqrt
     comment <- ifelse(err.model>=err.guess, "No better than random guess!", "Nice job!")
     cat(comment, fill = T)
