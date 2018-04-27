@@ -1,5 +1,3 @@
 ### Model Progress
-
-| Date | Name | Model |  Error | Descripiton |
-|---|---|---|---|-------|
-| | | | |
+| MAE | model | parameters | notes | 
+| --- | ----- | ---------- | ----- |
