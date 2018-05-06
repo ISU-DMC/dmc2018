@@ -1,3 +1,4 @@
+## 2018-04-23
 alldata %>%
   mutate(week = week(date), month = month(date)) %>%
   group_by(date) %>% mutate(bestseller.oneday = ifelse(units == max(units), 1, 0)) %>%
@@ -75,3 +76,49 @@ daysold_stock <- feature.item0 %>%
          daysold = cut(daysold, breaks = c(0:6, 10, 20, Inf)))
 write.csv(daysold_stock %>% select(daysold, stock) %>% table(),
           file = "../../../DMC 2018/subset_based_on_days&stocks/days_stocks_alldata.csv")
+
+
+## 2018-4-24 
+# source("../../../DMC 2018/Data/Features/feature-feilittle.R")
+items <- read.table("../../data/raw_data/items.csv", sep = "|", header = T)
+train_Jan <- read.table("data_clean/train_Jan.txt", sep = "|", header = T)
+y <- train_Jan$units
+
+## mode function
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+####
+# freq_cate <- function(x_cate) {
+#   
+#   table(x_cate) %>% prop.table %>% as.data.frame %>% mutate(Freq = log(Freq*100)) %>%
+#   
+# }
+
+##### rrp #####
+rrp <- train_Jan$rrp
+table(rrp) %>% sort(decreasing = T)
+getmode(rrp)
+hist(rrp)
+abline(v = 114.23, col = "red", lty = 2)
+items %>% group_by(ctgroup) %>% 
+  do(data.frame(t(quantile(.$rrp)), quantile(.$rrp, 0.9), mean(.$rrp)))
+rrp_cut.c1 <- cut(rrp, breaks = c(0, 12.7, 48.3, 170, Inf))
+rrp_cut.c2 <- cut(rrp, breaks = c(0, 12.6, 44.4, 127, Inf))
+rrp_cut.c3 <- cut(rrp, breaks = c(0, 19.0, 82.5, 222, Inf))
+rrp_cut.q3 <- cut(rrp, breaks = c(quantile(rrp, probs = seq(0, 1, length.out = 3)),
+                              mean(rrp), getmode(rrp)) %>% unique, include.lowest = T)
+rrp_cut.q5 <- cut(rrp, breaks = c(quantile(rrp, probs = seq(0, 1, length.out = 5)),
+                               mean(rrp), getmode(rrp)) %>% unique, include.lowest = T)
+rrp_cut.q10 <- cut(rrp, breaks = c(quantile(rrp, probs = seq(0, 1, length.out = 10)),
+                               mean(rrp), getmode(rrp)) %>% unique, include.lowest = T)
+
+rrp_cut_freq <- freq_cate(rrp_cut.c1)
+rrp_cut_LLR <- LLR_cate(rrp_cut.c)
+
+rrp_cut3_LLR <- LLR_cate(rrp_cut.q3)
+rrp_cut5_LLR <- LLR_cate(rrp_cut.q5)
+rrp_cut10_LLR <- LLR_cate(rrp_cut.q10)
+

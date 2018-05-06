@@ -87,10 +87,15 @@ lasso_1c <- glmnet(x = x_train,
 write.table(data_Jan %>% select(-date),
             file = paste0("C:/Users/lyux/Dropbox/DMC 2018/ForZijian-MLAlgorithm/train_Jan_", Sys.Date(), ".txt"),
             sep = "|", row.names = FALSE, quote = FALSE, na = "")
+test_Jan_format %>% left_join(train, by = c("date", "pid", "size"), suffix = c(".na", "")) %>%
+  mutate(units = replace(units, is.na(units), 0)) %>% select(date, pid, size, units) -> truth_Jan
 write.table(test_Jan_format,
             file = paste0("C:/Users/lyux/Dropbox/DMC 2018/ForZijian-MLAlgorithm/test_Jan_", Sys.Date(), ".txt"),
             sep = "|", row.names = FALSE, quote = FALSE, na = "")
-kNN_output <- read.csv("/Users/lyux/Dropbox/DMC 2018/ForZijian-MLAlgorithm/testPreUnits_scale.csv", sep = "|")
+write.table(truth_Jan,
+            file = paste0("../../../DMC 2018/ForZijian-MLAlgorithm/truth_Jan_", Sys.Date(), ".txt"),
+            sep = "|", row.names = FALSE, quote = FALSE, na = "")
+kNN_output <- read.csv("../../../DMC 2018/ForZijian-MLAlgorithm/testPreUnits_k_10.csv", sep = "|")
 kNN <- kNN_output %>% select(pid, size, date, stock, pred = preUnits) %>% mutate(date = ymd(date))
 pred_Jan <- kNN %>%
   mutate(units = pred) %>% 
