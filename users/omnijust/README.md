@@ -9,3 +9,5 @@
 ### Will do it later.
 # 20180412
 ### The way I read in the datasets was wrong. Changes will be made by Friday.
+# 20180506
+### R file has been uploaded.
