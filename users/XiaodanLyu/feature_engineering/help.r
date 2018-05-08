@@ -1,13 +1,13 @@
 library(tidyverse)
 feature <- function(train, codebook){
-  
+  # browser()
   fac <- which(sapply(1:ncol(train), function(i) is.factor(train[,i]))==1)
   iter <- 0
   repeat({
     iter <- iter + 1
     name.fac <- colnames(train)[fac[iter]]
     code.fac <- codebook %>% filter(name.variable == name.fac) %>%
-      select(-type.feature, -name.variable) %>% spread(name.feature, value.feature)
+      dplyr::select(-type.feature, -name.variable) %>% spread(name.feature, value.feature)
     names(code.fac)[1] <- name.fac 
     train <- train %>% left_join(code.fac, by = name.fac)
     if(iter >= length(fac)) break
@@ -21,9 +21,12 @@ codebook <- function(train, response) {
   name <- colnames(train)
   fac <- which(sapply(1:ncol(train), function(i) is.factor(train[,i]))==1)
   code <- rbind(do.call("rbind", lapply(fac, freq_cate,
-                                        train %>% filter(!duplicated(cbind(pid, size))))),
-                do.call("rbind", lapply(fac, LLR_cate, train, response = response)))
+                                        train %>% filter(!duplicated(cbind(pid, size)))))
+                # do.call("rbind", lapply(fac, LLR_cate, train, response = response))
+                )
   names(code) <- c("name.feature", "level", "value.feature")
+  code <- code %>% 
+    separate(name.feature, into = c("name.variable", "type.feature"), sep = "_", remove = FALSE)
   return(code)
 }
 
