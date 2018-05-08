@@ -27,13 +27,11 @@ Result_Raw_0 <-  Result_Raw[, -(1:11)]
 Result <- t(Result_Raw_0)
 
 
-# Result_Standardized <- (apply(Result, MARGIN = 2, function(x)
-# {
-#   x/x[length(x)]
-# }))
+Result_Standardized <- (apply(Result, MARGIN = 2, function(x)
+{
+  x/x[length(x)]
+}))
 
-
-Result_Standardized <- Result
 
 #matrix that stores pm2.5 of 36 sites in Beijing
 # Result <- matrix(rep(0, 365*36), ncol = 36, nrow = 365)
@@ -147,26 +145,32 @@ Score <- round(daytemppcaobj$scores)
 
 ?kmeans
 
-Final_Result <- Result_Raw[,1:2]
-
-for(i in 4:6)
-{
-	N_Cluster <- i
-
-	Ind <- kmeans(Score, centers = N_Cluster, nstart = 25)
-	#Ind$cluster
-
-	Final_Result <- cbind(Final_Result, Ind$cluster)
-
-	
-}
-
-colnames(Final_Result)[3:5] <- paste0("Cluster_", 4:6)
-
-
-saveRDS(Final_Result, paste0("Cluster_Indicator_4_to_6.rds"))
 
 
 
 
+Ind <- kmeans(Score, centers = 5, nstart = 25)
+Ind$cluster
+
+
+
+
+Final_Result <- cbind(Result_Raw[,1:2], Ind$cluster)
+
+
+saveRDS(Final_Result, "Cluster_Indicator_5.rds")
+
+#get latitude and longitude
+# LL <- read.xlsx(xlsxFile = 
+#                   "/Users/www1stat/Desktop/547Project/Data_information_map.xlsx")
+# LLtmp <- LL[1:36,]
+# LLtmp
+# SER <- sub(pattern = "_Arrange.csv", replacement = "", x = FILE)
+# #Match the filename
+# IND <- match(x = SER, LLtmp$file_name)
+# Re_arrangeLL <- LL[IND,]
+
+
+
+#putting PCA score , latitude, longitude together
 
