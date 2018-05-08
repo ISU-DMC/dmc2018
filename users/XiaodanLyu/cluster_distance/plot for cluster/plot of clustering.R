@@ -1,8 +1,14 @@
+library(lubridate)
+library(magrittr)
+library(dplyr)
 cluster<-read.table("C:/Users/63139/Documents/GitHub/dmc2018/users/XiaodanLyu/cluster_distance/cluster_hengfang.txt",sep="|",head=T)
-a<-read.table("C:/Users/63139/Documents/GitHub/dmc2018/users/XiaodanLyu/data_clean/train_Jan.txt",sep="|",head=T)
+a<-read.csv("C:/R programming/raw_data/combined.csv")
+train.Jan <- a %>% 
+  mutate(date = ymd(date))%>% 
+  filter(date < ymd("2018-01-01"))
 pid.size<-c(1:12824)
 cluster<-data.frame(cluster,pid.size)
-data.c<-merge(a,cluster,by=c("pid","size"))
+data.c<-merge(train.Jan,cluster,by=c("pid","size"))
 data.c$units[is.na(data.c$units)]<-0
 subdata<-data.c[data.c$group5==5,]
 cum<-tapply(subdata$units,subdata$pid.size,cumsum)
