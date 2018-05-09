@@ -1,7 +1,7 @@
 ## windows
 source("../../../../../Dropbox/DMC 2018/Data/Features/help.r")
 ## Mac
-source("../../../../Dropbox/DMC 2018/Data/Features/help.r")
+source("feature_engineering/help.r")
 all_Jan <- read.table("data_clean/train_Jan.txt", sep = "|", header = T)
 items <- read.csv("../../data/raw_data/items.csv", sep = "|")
 any(ymd(all_Jan$date) < ymd(all_Jan$releaseDate))
