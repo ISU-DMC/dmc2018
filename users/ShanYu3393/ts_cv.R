@@ -3,14 +3,26 @@
 rm(list = ls())
 library('data.table')
 library('lubridate')
+library('tidyverse')
 library('caret')
+library('glmnet')
 source('/Users/shanyu/Dropbox/DMC/dmc2018/users/ShanYu3393/Loss_function.R')
-## Read in Data
+## Read in Response Data
 filepath='/Users/shanyu/Dropbox/DMC/dmc2018/users/XiaodanLyu/data_clean/train_Jan.txt'
-Whole<-fread(filepath,sep='|',header=TRUE)
-ID=Whole[, c(1,2,3)]
-X=as.matrix(Whole[,c('price','stock')])
-y=as.matrix(Whole$units)
+Whole<-fread(filepath,sep='|',header=TRUE)[,c(1,2,3,5)]
+## Read in features
+filepath='/Users/shanyu/Dropbox/DMC2018/DMC2018/2018.4.24/train_dummy.txt'
+Feature=fread(filepath,data.table=FALSE,header = TRUE,fill = TRUE)[,-1]
+## combine data
+Whole=left_join(Whole, Feature, by=c('pid','size','date'))
+Whole_train=Whole[ymd(Whole$date) <= ymd('2017-12-31'),]
+Whole_test=Whole[ymd(Whole$date) > ymd('2017-12-31'),]
+
+ID=Whole_train[, c(1,2,3)]
+X=as.matrix(Whole_train[,c('price','stock')])
+y=as.matrix(Whole_train$units)
+ID_test=Whole_test[, c(1,2,3)]
+X_test=as.matrix(Whole_test[,c('price','stock')])
 
 
 ## Split the data
@@ -22,22 +34,17 @@ AugtoJan=1:PeriodLength
 Split=createTimeSlices(1:PeriodLength, initialWindow = 40, horizon = 31,
                        fixedWindow = FALSE, skip = 3)
 
-# re-name the train set and test set
-names(Split$train)=paste0('train', 1:length(Split$train))
-names(Split$test)=paste0('test', 1:length(Split$test))
-
-
 LOSS=NULL
 for (fold in 1:length(Split$train)){
   
   # train set
   TrainEnd=ymd('2017-09-30')+max(Split$train[[fold]])
-  TrainIndex=which(ymd(Whole$date) <= TrainEnd)
+  TrainIndex=which(ymd(Whole_train$date) <= TrainEnd)
   
   # test set
   TestStart=ymd('2017-09-30')+max(Split$train[[fold]])+1
   TestEnd=ymd('2017-09-30')+max(Split$test[[fold]])
-  TestIndex=which(ymd(Whole$date) <= TestEnd & ymd(Whole$date) >= TestStart)
+  TestIndex=which(ymd(Whole_train$date) <= TestEnd & ymd(Whole_train$date) >= TestStart)
   
   # create random stock and soldout date
   Sold=data.frame(ID=ID[TestIndex,],y=y[TestIndex]) %>% spread(ID.date, y)
@@ -66,5 +73,23 @@ for (fold in 1:length(Split$train)){
   LOSS=rbind(LOSS,apply(pred,2,Loss_MAE,ID=ID[TestIndex,],stock=stock,Soldout=SoldOutDay))
 }
 
-colnames(LOSS)
+BestPara=fitted$lambda[which.min(colMeans(LOSS))]
 
+# fit model using whole train and selected tuning parameter
+fitted=glmnet(X, y, family = 'poisson', lambda=BestPara)
+
+# predict 
+pred=predict(fitted,newx=X_test,type='response')
+
+# calculate the MAE 
+filepath='/Users/shanyu/Dropbox/DMC/dmc2018/users/XiaodanLyu/data_clean/items_Jan.txt'
+item_Jan<-read.table(filepath,sep='|',header=TRUE)
+item_Jan <- item_Jan[,c(1,2,10)]
+filepath='/Users/shanyu/Dropbox/DMC/dmc2018/users/XiaodanLyu/data_clean/test_Jan.txt'
+Soldout<-read.table(filepath,sep='|',header=TRUE)
+
+A=left_join(ID_test,item_Jan,by=c('pid','size')) %>% 
+  left_join(Soldout,by=c('pid','size')) %>% select(pid,size,stock,soldOutDate) %>%
+  unique
+
+sqrt(Loss_MAE(pred,ID_test,stock=A$stock,Soldout=A$soldOutDate))
