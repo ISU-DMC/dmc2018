@@ -10,24 +10,26 @@ source('/Users/shanyu/Dropbox/DMC/dmc2018/users/ShanYu3393/Loss_function.R')
 ## Read in Response Data
 filepath='/Users/shanyu/Dropbox/DMC/dmc2018/users/XiaodanLyu/data_clean/train_Jan.txt'
 Whole<-fread(filepath,sep='|',header=TRUE)[,c(1,2,3,5)]
-## Read in features
-filepath='/Users/shanyu/Dropbox/DMC2018/DMC2018/2018.4.24/train_dummy.txt'
-Feature=fread(filepath,data.table=FALSE,header = TRUE,fill = TRUE)[,-1]
-## combine data
-Whole=left_join(Whole, Feature, by=c('pid','size','date'))
+
 Whole_train=Whole[ymd(Whole$date) <= ymd('2017-12-31'),]
 Whole_test=Whole[ymd(Whole$date) > ymd('2017-12-31'),]
 
-ID=Whole_train[, c(1,2,3)]
-X=as.matrix(Whole_train[,c('price','stock')])
+# ID for train: pid, size, date
+ID=Whole_train %>% select(pid, size, date)
+# feature in train
+X=model.matrix(units~., data = Whole_train %>% select(-pid, -size, -date))
+# sold units in train
 y=as.matrix(Whole_train$units)
-ID_test=Whole_test[, c(1,2,3)]
-X_test=as.matrix(Whole_test[,c('price','stock')])
+
+# ID for test: pid, size, date
+ID_test=Whole_test %>% select(pid, size, date)
+# feature for test
+X_test=model.matrix(units~., data = Whole_test %>% select(-pid, -size, -date))
 
 
 ## Split the data
 # could modify the end day
-PeriodLength=as.numeric(ymd('2018-01-01')-ymd('2017-10-01'))+1
+PeriodLength=as.numeric(ymd('2017-12-31')-ymd('2017-10-01'))+1
 AugtoJan=1:PeriodLength
 
 # use timeslices to create the train and test set
@@ -47,19 +49,26 @@ for (fold in 1:length(Split$train)){
   TestIndex=which(ymd(Whole_train$date) <= TestEnd & ymd(Whole_train$date) >= TestStart)
   
   # create random stock and soldout date
-  Sold=data.frame(ID=ID[TestIndex,],y=y[TestIndex]) %>% spread(ID.date, y)
-  SoldSum=rowSums(Sold[,-c(1,2)],na.rm = TRUE)
-  stock=SoldOutDay=rep(0,length(SoldSum))
-  for(i in which(SoldSum > 0)) {
-    dailysale=as.numeric(Sold[i,-c(1,2)])
-    if (SoldSum[i]==1) {
-      stock[i]=1
-      SoldOutDay[i]=which(dailysale==1)
-    } else{
-      stock[i]=sample(1:SoldSum[i],1)
-      SoldOutDay[i]=which(cumsum(dailysale[!is.na(dailysale)])>=stock[i])[1]+sum(is.na(dailysale))
-    }
-  }
+  # Sold=data.frame(ID=ID[TestIndex,],y=y[TestIndex]) %>% spread(ID.date, y)
+  # SoldSum=rowSums(Sold[,-c(1,2)],na.rm = TRUE)
+  # stock=SoldOutDay=rep(0,length(SoldSum))
+  # for(i in which(SoldSum > 0)) {
+  #   dailysale=as.numeric(Sold[i,-c(1,2)])
+  #   if (SoldSum[i]==1) {
+  #     stock[i]=1
+  #     SoldOutDay[i]=which(dailysale==1)
+  #   } else{
+  #     stock[i]=sample(1:SoldSum[i],1)
+  #     SoldOutDay[i]=which(cumsum(dailysale[!is.na(dailysale)])>=stock[i])[1]+sum(is.na(dailysale))
+  #   }
+  # }
+  SoldTest <- data.frame(ID[TestIndex,], y=y[TestIndex])
+  SoldTest %>% group_by(pid, size) %>%
+    mutate(cumunits = cumsum(y),
+           stock = ifelse(max(cumunits) == 0, 0, sample(1:max(cumunits)))) %>%
+    filter(cumunits >= stock) %>%
+    arrange(date) %>%
+    summarise(stock = unique(stock), soldOutDate = min(date)) -> Sold
   
   # May need further code to generate LLR or other features
   
