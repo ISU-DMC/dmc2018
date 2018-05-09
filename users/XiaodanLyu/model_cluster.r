@@ -5,7 +5,7 @@ train <- read.csv("../../data/raw_data/train.csv", sep = "|", stringsAsFactors =
 prices <- read.csv("../../data/raw_data/prices.csv", sep = "|", stringsAsFactors = F)
 
 ## load item static features
-items <- read_rds("feature_engineering/item_static_features.rds")
+items <- readRDS("feature_engineering/item_static_features.rds")
 
 ## join three tables
 prices_long <- prices %>% gather(date, price, -pid, -size) %>%
@@ -22,14 +22,25 @@ prices_long <- prices %>% gather(date, price, -pid, -size) %>%
 prices_long %>% summary()
 
 ## trend
-trend.google <- read.csv("feature_engineering/")
+trend.google <- read.csv("feature_engineering/google_trend_Yuchen.txt", header = T, sep = "|")
+trend.google %>% mutate(date = mdy(date)) -> trend.google
 
 ## join three datasets
-alldata <- left_join(prices_long, train, by = c("pid", "size", "date")) %>% 
-  left_join(items, by = c("pid", "size")) %>%
+alldata <- train %>% mutate(date = ymd(date)) %>%
+  full_join(prices_long, by = c("pid", "size", "date")) %>% 
+  full_join(items %>% mutate(pid = as.numeric(pid)), by = c("pid", "size")) %>%
+  full_join(trend.google, by = "date") %>%
   filter(date>=releaseDate) %>% ## remove data before releasedate
   mutate(units = replace(units, is.na(units) & date < ymd("2018-02-01"), 0),
          discount = (rrp-price)/rrp*100)
 
+any(is.na(alldata %>% select(-units)))
+
 ## cluster results
-cluster_hf <- read.csv("cluster_distance/cluster_hengfang.csv")
+cluster_hf <- read.table("cluster_distance/cluster_hengfang.txt", sep = "|", header = T)
+cluster_hf %>% glimpse
+
+data5.4 <- alldata %>%
+  left_join(cluster_hf %>% filter(group5 == 4), by = c("pid", "size")) %>%
+  select(-group4, -group5) %>% filter(date < ymd("2018-02-01"))
+
