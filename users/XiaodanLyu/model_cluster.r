@@ -25,7 +25,8 @@ prices_long %>% summary()
 
 ## trend
 trend.google <- read.csv("feature_engineering/google_trend_Yuchen.txt", header = T, sep = "|")
-trend.google %>% mutate(date = mdy(date)) -> trend.google
+trend.google %>% mutate(date = ymd(date)) -> trend.google
+trend.google %>% glimpse
 
 train <- train %>% mutate(date = ymd(date), size = replace(size, size == "", "42"))
 prices_long <- prices_long %>% mutate(size = replace(size, size == "", "42"))
@@ -44,19 +45,36 @@ alldata %>% select(pid, size) %>% unique %>% dim
 
 any(is.na(alldata %>% select(-units)))
 
-## cluster results
-cluster_hf <- read.table("cluster_distance/cluster_hengfang.txt", sep = "|", header = T)
-cluster_hf <- cluster_hf %>% mutate(size = replace(size, size == "", "42"))
-cluster_hf %>% glimpse
-table(cluster_hf$group5)
+## hengfang_cluster_allproducts_group5
+# cluster_hf <- read.table("cluster_distance/cluster_hengfang.txt", sep = "|", header = T)
+# cluster_hf <- cluster_hf %>% mutate(size = replace(size, size == "", "42"))
+# cluster_hf %>% glimpse
+# table(cluster_hf$group5)
+# 
+# data5 <- cluster_hf %>% filter(group5 == 1) %>%
+#   left_join(alldata, by = c("pid", "size")) %>%
+#   select(-size1, -size2, -size3) %>% 
+#   select(-group4, -group5) %>% filter(date < ymd("2018-02-01"))
+# ## check number of products in selected group
+# data5 %>% select(pid, size) %>% unique %>% dim
 
-## change group5 indicator
-data5 <- cluster_hf %>% filter(group5 == 1) %>%
+## yan_cluster_freq4_group9
+cluster_yan <- read_rds("cluster_distance/cluster_yan_freq4_group9.RDS")
+cluster_yan <- cluster_yan %>% mutate(size = replace(size, size == "", "42"))
+cluster_yan %>% glimpse
+table(cluster_yan$group9)
+train <- cluster_yan %>% filter(group9 == 1) %>%
   left_join(alldata, by = c("pid", "size")) %>%
-  select(-size1, -size2, -size3) %>% 
-  select(-group4, -group5) %>% filter(date < ymd("2018-02-01"))
+  select(-size1, -size2, -size3, -group9) %>% 
+  filter(date < ymd("2018-02-01"))
 ## check number of products in selected group
-data5 %>% select(pid, size) %>% unique %>% dim
+train %>% select(pid, size) %>% unique %>% dim
 
 ## create matrix_feature
-matrix_feature <- model.matrix(units~., data = data5 %>% select(-pid, -size, -date, -releaseDate))
+matrix_x <- model.matrix(units~., data = train %>% select(-pid, -size, -date, -releaseDate))
+## xgboost poisson
+xgb <- xgboost(data=matrix_x, label=train$units, max_depth=40, eval_metric="rmse",
+               subsample=0.6, eta=0.3, objective="count:poisson", nrounds = 160)
+importance <- xgb.importance(colnames(matrix_x), model = xgb)  
+head(importance)  
+xgb.plot.importance(importance_matrix = importance,top_n = 20) 
