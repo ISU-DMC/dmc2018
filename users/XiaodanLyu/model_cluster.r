@@ -53,6 +53,10 @@ table(cluster_hf$group5)
 ## change group5 indicator
 data5 <- cluster_hf %>% filter(group5 == 1) %>%
   left_join(alldata, by = c("pid", "size")) %>%
+  select(-size1, -size2, -size3) %>% 
   select(-group4, -group5) %>% filter(date < ymd("2018-02-01"))
 ## check number of products in selected group
 data5 %>% select(pid, size) %>% unique %>% dim
+
+## create matrix_feature
+matrix_feature <- model.matrix(units~., data = data5 %>% select(-pid, -size, -date, -releaseDate))
