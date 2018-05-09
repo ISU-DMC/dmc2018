@@ -8,15 +8,22 @@ price.lag1.reldiff
 rrp
 discount
 
-size1
-size2
+size1_freq
+size2_freq
 size4
+size4_freq
 size.shape
+size.shape_freq
 size.body
 
 maincategory
 category
 subcategory
+maincategory_freq
+category_freq
+subcategory
+ctg.subctg_freq
+ctg.subctg_freq
 
 color
 color.coldorwarm
@@ -26,8 +33,10 @@ color.B
 
 
 pid.cut
+pid.cut_freq
 
 brand
 brand.German.layer
 brand.NBA.team
+brand.German.football.club
 
