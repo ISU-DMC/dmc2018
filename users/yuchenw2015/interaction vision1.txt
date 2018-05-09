@@ -1,0 +1,33 @@
+Interaction list
+interaction(~, amazon trend)   interaction(~,X11teamsports_43)
+
+stock
+
+price
+price.lag1.reldiff
+rrp
+discount
+
+size1
+size2
+size4
+size.shape
+size.body
+
+maincategory
+category
+subcategory
+
+color
+color.coldorwarm
+color.R
+color.G
+color.B
+
+
+pid.cut
+
+brand
+brand.German.layer
+brand.NBA.team
+
