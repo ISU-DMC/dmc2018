@@ -58,12 +58,15 @@ any(is.na(alldata %>% select(-units)))
 # ## check number of products in selected group
 # data5 %>% select(pid, size) %>% unique %>% dim
 
-## yan_cluster_freq4_group9
-cluster_yan <- read_rds("cluster_distance/cluster_yan_freq4_group9.RDS")
-cluster_yan <- cluster_yan %>% mutate(size = replace(size, size == "", "42"))
-cluster_yan %>% glimpse
-table(cluster_yan$group9)
-train <- cluster_yan %>% filter(group9 == 1) %>%
+## cluster_freq4_group9
+# filename <- "cluster_distance/cluster_yan_freq4_group9.RDS"
+filename <- "cluster_distance/cluster_hengfang_freq4.rds"
+cluster <- read_rds(filename)
+cluster <- cluster %>% mutate(size = replace(size, size == "", "42"))
+names(cluster)[3] <- "group9"
+cluster %>% glimpse
+table(cluster$group9)
+train <- cluster %>% filter(group9 == 1) %>%
   left_join(alldata, by = c("pid", "size")) %>%
   select(-size1, -size2, -size3, -group9) %>% 
   filter(date < ymd("2018-02-01"))
