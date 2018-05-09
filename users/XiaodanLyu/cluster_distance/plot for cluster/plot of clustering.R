@@ -1,23 +1,21 @@
 library(lubridate)
-library(magrittr)
 library(dplyr)
-cluster<-load("C:/Users/63139/Documents/GitHub/dmc2018/users/XiaodanLyu/cluster_distance/Cluster_Yan.Rda")
+cluster<-readRDS("C:/Users/63139/Documents/GitHub/dmc2018/users/hengfang/Cluster_Indicator_9_Sell_Freq_LO_4.rds")
 a<-read.csv("C:/R programming/raw_data/combined.csv")
 train.Jan <- a %>% 
   mutate(date = ymd(date))%>% 
   filter(date < ymd("2018-02-01"))
-pid.size<-c(1:7520)
-cluster<-Cluster.Label
+pid.size<-c(1:length(cluster))
 cluster<-data.frame(cluster,pid.size)
 data.c<-merge(train.Jan,cluster,by=c("pid","size"))
 data.c$units[is.na(data.c$units)]<-0
 ## cumsum plot
-subdata<-data.c[data.c$group5==1,]
+subdata<-data.c[data.c$Cluster_9==9,]
 cum<-tapply(subdata$units,subdata$pid.size,cumsum)
-plot(c(1:92),unlist(cum[1])[1:92]/unlist(cum[1])[92],main="sold.per.cut group 9",type="l",xlim=c(0,92),ylim=c(0,1),xlab="day",ylab="% of total units sold")
+plot(c(1:123),unlist(cum[1])[1:123]/unlist(cum[1])[123],main="hengfang group 9.9",type="l",xlim=c(0,123),ylim=c(0,1),xlab="day",ylab="% of total units sold")
 i<-0
 for(i in 2:length(cum)){
-  lines(c(1:92),unlist(cum[i])[1:92]/unlist(cum[i])[92],col=i)
+  lines(c(1:123),unlist(cum[i])[1:123]/unlist(cum[i])[123],col=i)
 }
 ## diff (lag=1) plot
 diff<-function(v){
