@@ -4,24 +4,9 @@ library(tidyverse)
 library(lubridate)
 ## read raw datasets
 train <- read.csv("../../data/raw_data/train.csv", sep = "|", stringsAsFactors = F)
-prices <- read.csv("../../data/raw_data/prices.csv", sep = "|", stringsAsFactors = F)
-
 ## load item static features
-items <- readRDS("feature_engineering/item_static_features.rds")
-
-## join three tables
-prices_long <- prices %>% gather(date, price, -pid, -size) %>%
-  mutate(date = gsub("X", "", date) %>% ymd())  %>% 
-  group_by(pid, size) %>% 
-  filter(!is.na(price)) %>%
-  mutate(
-    price.lag1.diff = price - lag(price),
-    price.lag1.reldiff = price.lag1.diff/lag(price)*100,
-    price.lag1.diff = replace(price.lag1.diff, is.na(price.lag1.diff), 0),
-    price.lag1.reldiff = replace(price.lag1.reldiff, is.na(price.lag1.reldiff), 0)) %>%
-  ungroup 
-
-prices_long %>% summary()
+items <- readRDS("feature_engineering/item_static_features_may9.rds")
+prices_long <- readRDS("feature_engineering/prices_feature_may9.rds")
 
 ## trend
 trend.google <- read.csv("feature_engineering/google_trend_Yuchen.txt", header = T, sep = "|")
@@ -41,9 +26,24 @@ alldata <- train %>%
   mutate(units = replace(units, is.na(units) & date < ymd("2018-02-01"), 0),
          discount = (rrp-price)/rrp*100)
 
-alldata %>% select(pid, size) %>% unique %>% dim
+alldata %>% dplyr::select(pid, size) %>% unique %>% dim
+any(is.na(alldata %>% dplyr::select(-units)))
 
-any(is.na(alldata %>% select(-units)))
+trendXstock <- as.matrix(alldata %>% dplyr::select(contains("May"))) * alldata$stock
+colnames(trendXstock) <- paste0("trendXstock_", colnames(trendXstock))
+trendXprice <- as.matrix(alldata %>% dplyr::select(contains("May"))) * alldata$price
+colnames(trendXprice) <- paste0("trendXprice_", colnames(trendXprice))
+trendXdiscount <- as.matrix(alldata %>% dplyr::select(contains("May"))) * alldata$discount
+colnames(trendXdiscount) <- paste0("trendXdiscount_", colnames(trendXdiscount))
+
+alldata_expand <- cbind(alldata, trendXstock, trendXprice, trendXdiscount)
+alldata_expand_date <- alldata_expand %>% mutate(
+  day = day(date) %>% as.character,
+  weekday = weekdays(date),
+  monthweek = ceiling((day(date) + first_day_of_month_wday(date) - 1) / 7) %>% as.character
+)
+
+write_rds(alldata_expand_date, "all_features_may9.rds")
 
 ## hengfang_cluster_allproducts_group5
 # cluster_hf <- read.table("cluster_distance/cluster_hengfang.txt", sep = "|", header = T)
@@ -68,13 +68,15 @@ cluster %>% glimpse
 table(cluster$group9)
 train <- cluster %>% filter(group9 == 1) %>%
   left_join(alldata, by = c("pid", "size")) %>%
-  select(-size1, -size2, -size3, -group9) %>% 
+  mutate()
+  dplyr::select(-size1, -size2, -size3, -group9) %>% 
   filter(date < ymd("2018-02-01"))
 ## check number of products in selected group
-train %>% select(pid, size) %>% unique %>% dim
+train %>% dplyr::select(pid, size) %>% unique %>% dim
 
 ## create matrix_feature
-matrix_x <- model.matrix(units~., data = train %>% select(-pid, -size, -date, -releaseDate))
+matrix_x <- model.matrix(units ~ .,
+                         data = train %>% dplyr::select(-pid, -size, -date, -releaseDate))
 ## xgboost poisson
 xgb <- xgboost(data=matrix_x, label=train$units, max_depth=40, eval_metric="rmse",
                subsample=0.6, eta=0.3, objective="count:poisson", nrounds = 160)
