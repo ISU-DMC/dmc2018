@@ -3,3 +3,4 @@
 data_clean/models/
 .httr-oauth
 rNN_help/
+data_input/

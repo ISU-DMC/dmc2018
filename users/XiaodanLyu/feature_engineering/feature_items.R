@@ -1,6 +1,8 @@
 source("feature_engineering/help.r")
 
 library(MASS)
+library(dplyr)
+library(lubridate)
 dec2frac <- function(chr){
   chr2 <- chr %>% as.numeric %>% fractions %>% as.character %>% 
     strsplit(split = "/") %>% unlist %>% as.numeric()
@@ -11,13 +13,13 @@ dec2frac <- function(chr){
 dec2frac(14/3)
 dec2frac("4.666667")
 
-items <- read.csv("../../../data/raw_data/items.csv", sep = "|")
+items <- read.csv("../../data/raw_data/items.csv", sep = "|")
 
 library(readxl)
-color_relabel <- read_excel("fct_relabel.xlsx", sheet = "color")
-brand_relabel <- read_excel("fct_relabel.xlsx", sheet = "brand")
-size_relabel <- read_excel("fct_relabel.xlsx", sheet = "size")
-product_relabel <- read.table("stock_units_cut.txt", sep = "|", header = TRUE)
+color_relabel <- read_excel("feature_engineering/fct_relabel.xlsx", sheet = "color")
+brand_relabel <- read_excel("feature_engineering/fct_relabel.xlsx", sheet = "brand")
+size_relabel <- read_excel("feature_engineering/fct_relabel.xlsx", sheet = "size")
+product_relabel <- read.table("feature_engineering/stock_units_cut.txt", sep = "|", header = TRUE)
 product_relabel <- product_relabel %>% mutate(size = gsub("\t", ",", size))
 id.dec <- grepl("\\.", size_relabel$old_levels)
 size_relabel$old_levels[id.dec] <- sapply(size_relabel$old_levels[id.dec], dec2frac) %>% unname
@@ -74,27 +76,4 @@ freq_feature <- feature(items_expand_format, codebook_freq)
 any(is.na(freq_feature))
 glimpse(freq_feature)
 
-write_rds(freq_feature, "item_static_features_may9.rds")
-
-## dynamic feature
-prices <- read.csv("../../data/raw_data/prices.csv", sep = "|", stringsAsFactors = F)
-## join three tables
-prices_long <- prices %>% gather(date, price, -pid, -size) %>%
-  mutate(date = gsub("X", "", date) %>% ymd())  %>% 
-  group_by(pid, size) %>% 
-  filter(!is.na(price)) %>%
-  mutate(
-    price.lag1.diff = price - lag(price),
-    price.lag1.reldiff = price.lag1.diff/lag(price)*100,
-    price.lag1.diff = replace(price.lag1.diff, is.na(price.lag1.diff), 0),
-    price.lag1.reldiff = replace(price.lag1.reldiff, is.na(price.lag1.reldiff), 0)) %>%
-  ungroup 
-prices_long %>% glimpse()
-## price cut
-price_cut_relabel <- read_excel("feature_engineering/fct_relabel.xlsx", sheet = "price_cut")
-
-prices_long %>% left_join(price_cut_relabel, by = c("price" = "old_levels")) -> prices_feature
-prices_feature %>% apply(2, function(x) sum(is.na(x)))
-prices_feature %>% glimpse()
-
-write_rds(prices_feature, "feature_engineering/prices_feature_may9.rds")
+write_rds(freq_feature, "feature_engineering/item_static_features_may9.rds")
