@@ -26,11 +26,13 @@ y=as.matrix(Whole_train$units)
 ID_test=Whole_test %>% select(pid, size, date)
 # feature for test
 X_test=X_all[ymd(Whole$date) > ymd('2017-12-31'),]
+# sold units in test
+y_test=as.matrix(Whole_test$units)
 
 #check features
 dim(X)[2]==dim(X_test)[2]
 
-## Split the data
+## -----------------------------------Split the data
 # could modify the end day
 PeriodLength=as.numeric(ymd('2017-12-31')-ymd('2017-10-01'))+1
 AugtoJan=1:PeriodLength
@@ -39,6 +41,11 @@ AugtoJan=1:PeriodLength
 Split=createTimeSlices(1:PeriodLength, initialWindow = 40, horizon = 31,
                        fixedWindow = FALSE, skip = 3)
 
+## -----------------------------give the tuning parameter
+# lambda for lasso
+lambda=exp(seq(log(10^-6),log(10^2),length.out=60))
+
+## ----------------------------time series based cross validation
 LOSS=NULL
 glmnet_cv=function(fold){
   
@@ -52,42 +59,27 @@ glmnet_cv=function(fold){
   TestIndex=which(ymd(Whole_train$date) <= TestEnd & ymd(Whole_train$date) >= TestStart)
   
   # create random stock and soldout date
-  Sold=data.frame(ID=ID[TestIndex,],y=y[TestIndex]) %>% spread(ID.date, y)
-  SoldSum=rowSums(Sold[,-c(1,2)],na.rm = TRUE)
-  stock=SoldOutDay=rep(0,length(SoldSum))
-  for(i in which(SoldSum > 0)) {
-    dailysale=as.numeric(Sold[i,-c(1,2)])
-    if (SoldSum[i]==1) {
-      stock[i]=1
-      SoldOutDay[i]=which(dailysale==1)
-    } else{
-      stock[i]=sample(1:SoldSum[i],1)
-      SoldOutDay[i]=which(cumsum(dailysale[!is.na(dailysale)])>=stock[i])[1]+sum(is.na(dailysale))
-    }
-  }
-  # SoldTest <- data.frame(ID[TestIndex,], y=y[TestIndex])
-  # SoldTest %>% group_by(pid, size) %>%
-  #   mutate(cumunits = cumsum(y),
-  #          stock = ifelse(max(cumunits) == 0, 0, sample(1:max(cumunits)))) %>%
-  #   filter(cumunits >= stock) %>%
-  #   arrange(date) %>%
-  #   summarise(stock = unique(stock), soldOutDate = min(date)) -> Sold
+  Test_SoldoutD=Stock_Soldoutday(ID[TestIndex,],y=y[TestIndex])
   
   # May need further code to generate LLR or other features
   
   # fit the model using training data
-  fitted=glmnet(X[TrainIndex,], y[TrainIndex], family = 'poisson')
+  fitted=glmnet(X[TrainIndex,], y[TrainIndex], family = 'poisson', lambda = lambda)
   
   # pred for test set                              
   pred=predict(fitted,newx=X[TestIndex,],type='response')
   
   # calculate Loss function for each tunning parameter
-  apply(pred,2,Loss_MAE,ID=ID[TestIndex,],stock=stock,Soldout=SoldOutDay)
+  apply(pred,2,Loss_MAE,ID=ID[TestIndex,],stock=Test_SoldoutD$stock,
+        Soldout=Test_SoldoutD$SoldOutDay)
 }
+
 
 LOSS=mclapply(1:length(Split$train),glmnet_cv,mc.cores=16)
 LOSS=do.call(rbind,LOSS)
-BestPara=fitted$lambda[which.min(colMeans(LOSS))]
+
+## ----------------------------choose the best parameter
+BestPara=lambda[which.min(colMeans(LOSS))]
 
 # fit model using whole train and selected tuning parameter
 fitted=glmnet(X, y, family = 'poisson', lambda=BestPara)
@@ -96,14 +88,7 @@ fitted=glmnet(X, y, family = 'poisson', lambda=BestPara)
 pred=predict(fitted,newx=X_test,type='response')
 
 # calculate the MAE 
-filepath='/Users/shanyu/Dropbox/DMC/dmc2018/users/XiaodanLyu/data_clean/items_Jan.txt'
-item_Jan<-read.table(filepath,sep='|',header=TRUE)
-item_Jan <- item_Jan[,c(1,2,10)]
-filepath='/Users/shanyu/Dropbox/DMC/dmc2018/users/XiaodanLyu/data_clean/test_Jan.txt'
-Soldout<-read.table(filepath,sep='|',header=TRUE)
 
-A=left_join(ID_test,item_Jan,by=c('pid','size')) %>% 
-  left_join(Soldout,by=c('pid','size')) %>% select(pid,size,stock,soldOutDate) %>%
-  unique
+SoldoutD=Stock_Soldoutday(ID_test,y=y_test)
 
-sqrt(Loss_MAE(pred,ID_test,stock=A$stock,Soldout=A$soldOutDate))
+sqrt(Loss_MAE(pred,ID_test,stock=SoldoutD$stock,Soldout=SoldoutD$soldOutDate))
