@@ -105,3 +105,7 @@ xgb <- xgboost(data=matrix_x, label=train$units, max_depth=40, eval_metric="rmse
 importance <- xgb.importance(colnames(matrix_x), model = xgb)  
 head(importance)  
 xgb.plot.importance(importance_matrix = importance,top_n = 20) 
+
+
+
+saveRDS(alldata, "/Users/shanyu/Desktop/alldata.rds")
