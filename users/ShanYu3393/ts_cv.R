@@ -6,6 +6,7 @@ library('lubridate')
 library('tidyverse')
 library('caret')
 library('glmnet')
+library('parallel')
 source('/Users/shanyu/Dropbox/DMC/dmc2018/users/ShanYu3393/Loss_function.R')
 ## Read in Response Data
 
@@ -39,7 +40,7 @@ Split=createTimeSlices(1:PeriodLength, initialWindow = 40, horizon = 31,
                        fixedWindow = FALSE, skip = 3)
 
 LOSS=NULL
-for (fold in 1:length(Split$train)){
+glmnet_cv=function(fold){
   
   # train set
   TrainEnd=ymd('2017-09-30')+max(Split$train[[fold]])
@@ -81,9 +82,11 @@ for (fold in 1:length(Split$train)){
   pred=predict(fitted,newx=X[TestIndex,],type='response')
   
   # calculate Loss function for each tunning parameter
-  LOSS=rbind(LOSS,apply(pred,2,Loss_MAE,ID=ID[TestIndex,],stock=stock,Soldout=SoldOutDay))
+  apply(pred,2,Loss_MAE,ID=ID[TestIndex,],stock=stock,Soldout=SoldOutDay)
 }
 
+LOSS=mclapply(1:length(Split$train),glmnet_cv,mc.cores=16)
+LOSS=do.call(rbind,LOSS)
 BestPara=fitted$lambda[which.min(colMeans(LOSS))]
 
 # fit model using whole train and selected tuning parameter
