@@ -1,4 +1,4 @@
-pid|size|cut
+pid|size|stock.units.cut
 10000|XL ( 158-170 )|Cut1
 10001|L|Cut2
 10003|3 (35-38 )|Cut7
