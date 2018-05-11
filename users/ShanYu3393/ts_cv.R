@@ -8,6 +8,7 @@ library('caret')
 library('glmnet')
 library('parallel')
 source('/Users/shanyu/Dropbox/DMC/dmc2018/users/ShanYu3393/Loss_function.R')
+source('/Users/shanyu/Dropbox/DMC/dmc2018/users/ShanYu3393/generate_soldoutday.R')
 ## Read in Response Data
 
 Whole=alldata[ymd(alldata$date) <= ymd('2018-01-31'),]
