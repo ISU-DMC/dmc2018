@@ -4,12 +4,12 @@ source("feature_engineering/help.r")
 library(tidyverse)
 library(lubridate)
 ## read raw datasets
-train <- read.csv("../../data/raw_data/train.csv", sep = "|", stringsAsFactors = F)
+train <- read.csv("../../data/train.csv", sep = "|", stringsAsFactors = F)
 ## load item static features
-items <- readRDS("feature_engineering/item_static_features_may9.rds")
+items <- readRDS("feature_engineering/item_static_features_may10.rds")
 
 ## dynamic feature
-prices <- read.csv("../../data/raw_data/prices.csv", sep = "|", stringsAsFactors = F)
+prices <- read.csv("../../data/prices.csv", sep = "|", stringsAsFactors = F)
 ## join three tables
 prices_long <- prices %>% gather(date, price, -pid, -size) %>%
   mutate(date = gsub("X", "", date) %>% ymd())  %>% 
@@ -26,7 +26,7 @@ prices_long %>% glimpse()
 price_cut_relabel <- read_excel("feature_engineering/fct_relabel.xlsx", sheet = "price_cut")
 
 prices_long %>% left_join(price_cut_relabel, by = c("price" = "old_levels")) -> prices_feature
-prices_feature %>% apply(2, function(x) sum(is.na(x)))
+any(is.na(prices_long))
 prices_feature %>% glimpse()
 
 ## trend
@@ -50,21 +50,42 @@ alldata <- train %>%
 alldata %>% dplyr::select(pid, size) %>% unique %>% dim
 any(is.na(alldata %>% dplyr::select(-units)))
 
-trendXstock <- as.matrix(alldata %>% dplyr::select(contains("May"))) * alldata$stock
+trendXstock <- as.matrix(alldata %>% dplyr::select(contains("trend"))) * alldata$stock
 colnames(trendXstock) <- paste0("trendXstock_", colnames(trendXstock))
-trendXprice <- as.matrix(alldata %>% dplyr::select(contains("May"))) * alldata$price
+trendXprice <- as.matrix(alldata %>% dplyr::select(contains("trend"))) * alldata$price
 colnames(trendXprice) <- paste0("trendXprice_", colnames(trendXprice))
-trendXdiscount <- as.matrix(alldata %>% dplyr::select(contains("May"))) * alldata$discount
+trendXdiscount <- as.matrix(alldata %>% dplyr::select(contains("trend"))) * alldata$discount
 colnames(trendXdiscount) <- paste0("trendXdiscount_", colnames(trendXdiscount))
 
-alldata_expand <- cbind(alldata, trendXstock, trendXprice, trendXdiscount)
+(names.trend <- grep("trend", colnames(trend.google), value = T))
+(names.freq <- grep("X", grep("freq", colnames(items), value = T), invert = TRUE, value = T))
+names.trendXfreq <- combn(c(names.trend, names.freq), 2) %>% t()
+names.selfXself <- rbind(expand.grid(names.trend, names.trend),
+                         expand.grid(names.freq, names.freq))
+names.trendXfreq.final <- data.frame(names.trendXfreq) %>%
+  anti_join(names.selfXself, by = c("X1" = "Var1", "X2" = "Var2")) %>%
+  mutate_if(is.factor, as.character)
+names.trendXfreq.final %>% glimpse
+
+trendXfreq_features <- data.frame(id = 1:nrow(alldata))
+for(i in 1:nrow(names.trendXfreq.final)){
+  name.var1 <- names.trendXfreq.final[i,1]
+  name.var2 <- names.trendXfreq.final[i,2]
+  trendXfreq_features <- cbind(trendXfreq_features,
+                               alldata[,name.var1]*alldata[,name.var2])
+  colnames(trendXfreq_features)[i+1] <- paste(name.var1, name.var2, sep = "X")
+}
+any(is.na(trendXfreq_features))
+
+alldata_expand <- cbind(alldata, trendXstock, trendXprice, trendXdiscount, trendXfreq_features)
 alldata_expand_date <- alldata_expand %>% mutate(
   day = day(date) %>% as.character,
   weekday = weekdays(date),
   monthweek = ceiling((day(date) + first_day_of_month_wday(date) - 1) / 7) %>% as.character
 )
+any(is.na(alldata_expand_date %>% dplyr::select(-units)))
 
-write_rds(alldata_expand_date, "all_features_may9.rds")
+readr::write_rds(alldata_expand_date, "all_features_may10.rds")
 
 ## hengfang_cluster_allproducts_group5
 # cluster_hf <- read.table("cluster_distance/cluster_hengfang.txt", sep = "|", header = T)
@@ -105,7 +126,3 @@ xgb <- xgboost(data=matrix_x, label=train$units, max_depth=40, eval_metric="rmse
 importance <- xgb.importance(colnames(matrix_x), model = xgb)  
 head(importance)  
 xgb.plot.importance(importance_matrix = importance,top_n = 20) 
-
-
-
-saveRDS(alldata, "/Users/shanyu/Desktop/alldata.rds")

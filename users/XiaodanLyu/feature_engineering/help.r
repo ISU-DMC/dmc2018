@@ -1,4 +1,6 @@
-library(tidyverse)
+# library(tidyverse)
+library(dplyr)
+library(tidyr)
 feature <- function(train, codebook){
   # browser()
   fac <- which(sapply(1:ncol(train), function(i) is.factor(train[,i]))==1)
