@@ -22,6 +22,27 @@ CondMedian_poi <- function(para,replication=20){
   median(A,na.rm=TRUE)
 }
 
+## sold out day calculated by cumsum
+Mean_poi <- function(para){
+  
+  # adjust NA
+  t0=sum(is.na(para))
+  para=para[!is.na(para)]
+  
+  # r is the number of stock
+  r=para[length(para)]
+  
+  # a branch of predicted value
+  lambda=para[-length(para)]
+  
+  # number of day
+  n=length(lambda)
+  
+  # generate soldout day
+  which(cumsum(lambda)>=r)[1]+t0
+}
+
+
 ## Calculate loss function
 Loss_MAE <- function(Para,ID,stock,Soldout){
   ## Input: 
