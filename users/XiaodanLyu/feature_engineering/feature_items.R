@@ -50,7 +50,7 @@ items_expand <- items %>%
     ## repleaseDate
     releaseDate = ymd(releaseDate),
     NewRelease = ifelse(releaseDate==ymd("2017-10-01"), "No", "Yes"),
-    relday = day(releaseDate) %>% as.numeric,
+    relday = (releaseDate - ymd("2017-09-30")) %>% as.numeric,
     relweekday = weekdays(releaseDate),
     relmonthweek = ceiling((day(releaseDate)+first_day_of_month_wday(releaseDate)-1)/7) %>% as.character
     # main.subctg = paste(mainCategory, subCategory, sep = "-"),
@@ -105,4 +105,4 @@ freq_feature <- feature(items_Jumbo, codebook_freq)
 any(is.na(freq_feature))
 dim(freq_feature)
 
-readr::write_rds(freq_feature, "feature_engineering/item_static_features_may10.rds")
+readr::write_rds(freq_feature, "/vol/data/zhuz/lyux/feature_rds/item_static_features_may10.rds")

@@ -1,12 +1,13 @@
 setwd("~/Google Drive/dmc2018/users/XiaodanLyu")
 source("feature_engineering/help.r")
 
-library(tidyverse)
+# library(tidyverse)
+library(tidyr);library(dplyr)
 library(lubridate)
 ## read raw datasets
 train <- read.csv("../../data/train.csv", sep = "|", stringsAsFactors = F)
 ## load item static features
-items <- readRDS("feature_engineering/item_static_features_may10.rds")
+items <- readRDS("/vol/data/zhuz/lyux/feature_rds/item_static_features_may10.rds")
 
 ## dynamic feature
 prices <- read.csv("../../data/prices.csv", sep = "|", stringsAsFactors = F)
@@ -28,19 +29,21 @@ price_cut_relabel <- read_excel("feature_engineering/fct_relabel.xlsx", sheet = 
 prices_long %>% left_join(price_cut_relabel, by = c("price" = "old_levels")) -> prices_feature
 any(is.na(prices_long))
 prices_feature %>% glimpse()
+prices_feature %>% is.na %>% any
 
 ## trend
 trend.google <- read.csv("feature_engineering/google_trend_Yuchen.txt", header = T, sep = "|")
 trend.google %>% mutate(date = ymd(date)) -> trend.google
 trend.google %>% glimpse
+trend.google %>% is.na %>% any
 
 train <- train %>% mutate(date = ymd(date), size = replace(size, size == "", "42"))
-prices_long <- prices_long %>% mutate(size = replace(size, size == "", "42"))
+prices_feature <- prices_feature %>% mutate(size = replace(size, size == "", "42"))
 items <- items %>% mutate(pid = as.numeric(pid))
 
 ## join three datasets
-alldata <- train %>%
-  full_join(prices_long, by = c("pid", "size", "date")) %>% 
+alldata <- prices_feature %>% filter(date < ymd("2018-02-01")) %>%
+  full_join(train, by = c("pid", "size", "date")) %>% 
   full_join(items, by = c("pid", "size")) %>%
   full_join(trend.google, by = "date") %>%
   filter(ymd(date)>=ymd(releaseDate)) %>% ## remove data before releasedate
@@ -48,7 +51,7 @@ alldata <- train %>%
          discount = (rrp-price)/rrp*100)
 
 alldata %>% dplyr::select(pid, size) %>% unique %>% dim
-any(is.na(alldata %>% dplyr::select(-units)))
+any(is.na(alldata))
 
 trendXstock <- as.matrix(alldata %>% dplyr::select(contains("trend"))) * alldata$stock
 colnames(trendXstock) <- paste0("trendXstock_", colnames(trendXstock))
@@ -79,14 +82,39 @@ any(is.na(trendXfreq_features))
 
 alldata_expand <- cbind(alldata, trendXstock, trendXprice, trendXdiscount, trendXfreq_features)
 alldata_expand_date <- alldata_expand %>% mutate(
-  day = day(date) %>% as.character,
-  weekday = weekdays(date),
-  monthweek = ceiling((day(date) + first_day_of_month_wday(date) - 1) / 7) %>% as.character
+  date.age = (date - releaseDate) %>% as.numeric,
+  date.day = (date - ymd("2017-09-30")) %>% as.numeric,
+  # date.dm = day(date),
+  date.wd = weekdays(date),
+  date.wm = ceiling((day(date) + first_day_of_month_wday(date) - 1) / 7) %>% as.character
 )
-any(is.na(alldata_expand_date %>% dplyr::select(-units)))
+any(is.na(alldata_expand_date))
 
-readr::write_rds(alldata_expand_date, "all_features_may10.rds")
+readr::write_rds(alldata_expand_date, "/vol/data/zhuz/lyux/feature_rds/all_features_may10.rds")
+alltrain.1 <- alltrain %>% .[1:nrow(.) %% 3 == 1, ] ## Yudi
+alltrain.2 <- alltrain %>% .[1:nrow(.) %% 3 == 2, ] 
+alltrain.3 <- alltrain %>% .[1:nrow(.) %% 3 == 0, ]
+  
+## delete some categorical variables not dummied ####
+format.df <- sapply(alldata_expand_date, class) %>% data.frame
+names.char <- format.df %>% mutate(var = rownames(format.df)) %>% rename(type = ".") %>%
+  filter(type == "character") %>% dplyr::select(var) %>% unlist %>% unname
+names.pick <- c("size", "size4", "size.shape", "size.body", "mainCategory", "category", "subCategory",
+                "color", "color.coldorwarm", "pid.cut", "brand", "brand.NBA.team",
+                "relweekday", "relmonthweek", "stock.cut",
+                "stock.units.cut", "price.cut.FS29", "date.wd", "date.wm")
+names.out <- names.char[-match(names.pick, names.char)]
 
+alldata_thin <- alldata_expand_date %>% dplyr::select(-one_of(names.out))
+sapply(alldata_thin, class) %>% data.frame
+alldata_thin %>% dim
+
+alltrain <- data.frame(units = alldata_thin$units, 
+                       model.matrix(units~., data = alldata_thin %>% dplyr::select(-pid, -size, -date, -releaseDate)))
+alltrain %>% dim
+readr::write_rds(alltrain, "/vol/data/zhuz/lyux/feature_rds/alltrain.rds")
+
+## read cluster results ####
 ## hengfang_cluster_allproducts_group5
 # cluster_hf <- read.table("cluster_distance/cluster_hengfang.txt", sep = "|", header = T)
 cluster_hf <- read_rds("../hengfang/Cluster_Indicator_4_to_6_Specific.rds")
@@ -116,13 +144,3 @@ data5 %>% dplyr::select(pid, size) %>% unique %>% dim
 #   filter(date < ymd("2018-02-01"))
 # ## check number of products in selected group
 # train %>% dplyr::select(pid, size) %>% unique %>% dim
-
-## create matrix_feature
-matrix_x <- model.matrix(units ~ .,
-                         data = train %>% dplyr::select(-pid, -size, -date, -releaseDate))
-## xgboost poisson
-xgb <- xgboost(data=matrix_x, label=train$units, max_depth=40, eval_metric="rmse",
-               subsample=0.6, eta=0.3, objective="count:poisson", nrounds = 160)
-importance <- xgb.importance(colnames(matrix_x), model = xgb)  
-head(importance)  
-xgb.plot.importance(importance_matrix = importance,top_n = 20) 
