@@ -1,3 +1,4 @@
+rm(list = ls(all = T))
 source("feature_engineering/help.r")
 
 # library(tidyverse)
@@ -23,6 +24,7 @@ prices_long <- prices %>% gather(date, price, -pid, -size) %>%
   ungroup 
 prices_long %>% glimpse()
 ## price cut
+library(readxl)
 price_cut_relabel <- read_excel("feature_engineering/fct_relabel.xlsx", sheet = "price_cut")
 
 prices_long %>% left_join(price_cut_relabel, by = c("price" = "old_levels")) -> prices_feature
@@ -89,4 +91,4 @@ alldata_expand_date <- alldata_expand %>% mutate(
 )
 any(is.na(alldata_expand_date))
 
-readr::write_rds(alldata_expand_date, "/vol/data/zhuz/lyux/feature_rds/all_features_may10.rds")
+readr::write_rds(alldata_expand_date, "/vol/data/zhuz/lyux/feature_rds/all_features_may14.rds")
