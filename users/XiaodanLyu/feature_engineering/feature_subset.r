@@ -32,7 +32,9 @@
 #     backgroundPosition = 'center'
 #   )
 
+## response == "units" ####
 ## feature selection indicators by Yuchen
+rm(list=ls(all=T))
 importance.feature <- read.csv("../yuchenw2015/feature_V01.csv") 
 var.in <- importance.feature %>% filter(High2.6. == 1 | Low2.6.100. == 1) %>% 
   select(feature) %>% unlist %>% unname
@@ -41,20 +43,24 @@ var.in <- importance.feature %>% filter(High2.6. == 1 | Low2.6.100. == 1) %>%
 filetolabel <- "/vol/data/zhuz/lyux/feature_rds/alllabel.rds"
 alllabel <- readr::read_rds(filetolabel)
 
-## cluster_hf_norounding
-cluster_hf <- read_rds("../hengfang/Cluster_Indicator_4_to_6_Specific.rds")
-
-cut.Jan <- read_rds("../yuchenw2015/Intermediate.rds")
-split.Jan <- cut.Jan %>% spread(Data_Ind, Count) %>%
-  rename(Before = `FALSE`, After = `TRUE`) %>%
-  mutate(Before = replace(Before, is.na(Before), 0),
-          After = replace(After, is.na(After), 0)) %>%
-  mutate(cut.Jan = "Both",
-         cut.Jan = replace(cut.Jan, Before == 0, "After"),
-         cut.Jan = replace(cut.Jan, After == 0, "Before"))
-
-filetoalltrain <- "/vol/data/zhuz/lyux/feature_rds/alltrain.rds"
+filetoalltrain <- "/vol/data/zhuz/lyux/feature_rds/alltrain_may14.rds"
 alltrain_input <- readr::read_rds(filetoalltrain)
+all(var.in %in% names(alltrain_input))
 cbind(alllabel, alltrain_input %>% select(one_of(c("units", as.character(var.in))))) -> alltrain_subfeature
 
-write_rds(alltrain_subfeature, "/vol/data/zhuz/lyux/feature_rds/alltrain_subfeatures.rds")
+write_rds(alltrain_subfeature, "/vol/data/zhuz/lyux/feature_rds/alltrain_subfeatures_may14.rds")
+
+## response = "wait_time" ####
+## feature selection indicators by Yuchen
+importance.feature <- read.csv("../yuchenw2015/WT_feature_V01.csv") 
+var.in <- importance.feature %>% filter(High == 1 | Low == 1) %>% 
+  select(feature) %>% unlist %>% unname %>% as.character
+
+filetoalltrain <- "/vol/data/zhuz/lyux/feature_rds/WT_alltrain.rds"
+alltrain_input <- readr::read_rds(filetoalltrain)
+alltrain_subfeature <- alltrain_input %>% select(one_of(c("time", as.character(var.in))))
+
+write_rds(alltrain_subfeature, "/vol/data/zhuz/lyux/feature_rds/WT_alltrain_subfeatures.rds")
+write.table(alltrain_subfeature, "/vol/data/zhuz/lyux/feature_rds/WT_alltrain_subfeatures.txt",
+            sep = "|", row.names = F, quote = F)
+
