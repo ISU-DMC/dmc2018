@@ -56,3 +56,10 @@ any(is.na(alltrain_freq4))
 write.table(alltrain_freq4, "/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_subfeatures_may14.txt",
             quote = F, row.names = F, sep = "|")
 names(alltrain_freq4) %>% sort
+
+## principle components feature selection
+pc.all <- princomp(alltrain_LLR %>% select(-pid, -size, -date, -units, -X.Intercept., -contains("Cluster_")) %>%
+                     select_if(is.numeric), cor=TRUE)
+summary(pc.all)
+alltrain_sub_pcr <- cbind(alltrain_LLR %>% select(pid:units, stock.cut:Cluster_9), pc.all$scores[,1:40])
+write_rds(alltrain_sub_pcr, "/vol/data/zhuz/lyux/feature_rds/alltrain_sub_prc_may15.rds")
