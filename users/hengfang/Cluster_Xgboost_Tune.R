@@ -4,7 +4,7 @@ library("dplyr")
 library("tidyr")
 library("lubridate")
 library(doMC)
-registerDoMC(cores = 13)
+registerDoMC(cores = 10)
 
 
 
