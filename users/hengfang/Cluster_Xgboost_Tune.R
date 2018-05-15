@@ -80,7 +80,7 @@ Tunexgboost <- train(y = Train$units,
 		expand.grid(nrounds = c(50,100,150),
 		max_depth = c(1,2,3), eta= c(0.3, 0.4),
 		subsample= c(0.5, 0.6, 0.75), 
-		gamma= 0, min_child_weight = 1, colsample_bytree= c(0.8,1)),   
+		gamma= 0, min_child_weight = 1, colsample_bytree= c(0.8,1))),   
 	trControl=trainControl(method="repeatedcv",repeats=1,number=10,
 		allowParallel = TRUE), maximize = F)
 
