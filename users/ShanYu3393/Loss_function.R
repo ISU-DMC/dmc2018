@@ -1,6 +1,6 @@
 ## define summaryFunction
 ## This is for poisson distribution
-CondMedian_poi <- function(para,replication=20){
+CondMedian_poi <- function(para,replication=500,type){
   
   # adjust NA
   t0=sum(is.na(para))
@@ -16,7 +16,12 @@ CondMedian_poi <- function(para,replication=20){
   n=length(lambda)
   
   # generate soldout day
-  A=sapply(1:replication,function(x) which(cumsum(rpois(n,lambda))>=r)[1])
+  if (type=='poi'){
+    A=sapply(1:replication,function(x) which(cumsum(rpois(n,lambda))>=r)[1])
+  } else {
+    A=sapply(1:replication,function(x) which(cumsum(rgeom(n,1-lambda))>=r)[1])
+  }
+  
   
   # calculate median
   median(A,na.rm=TRUE)
@@ -44,7 +49,7 @@ Mean_poi <- function(para){
 
 
 ## Calculate loss function
-Loss_MAE <- function(Para,ID,stock,Soldout){
+Loss_MAE <- function(Para,ID,stock,Soldout,type){
   ## Input: 
   # Para: estimated daily parameters
   # ID: pid size date
@@ -58,12 +63,12 @@ Loss_MAE <- function(Para,ID,stock,Soldout){
   
   # calculate conditional median for each item
   Pred=rep(0,length(Soldout))
-  Pred2=apply(PARA[Soldout!=0,],1,CondMedian_poi)
+  Pred2=apply(data.matrix(PARA[Soldout!=0,]),1,CondMedian_poi,type=type)
   Pred[Soldout!=0]=Pred2
   
   # if this item has not sold out within the preiod
-  Pred[is.na(Pred)]=25
+  Pred[is.na(Pred)]=28
   
   # sum of absolute difference
-  sum(abs(Pred-Soldout))
+  mean(abs(Pred-Soldout))
 }
