@@ -1,0 +1,6 @@
+[1] "Prediction Error: 2.41532"
+BestTune:
+  eta max_depth gamma colsample_bytree min_child_weight subsample nrounds
+1 0.3         3     0              0.8                1      0.75     150
+      RMSE  Rsquared       MAE    RMSESD RsquaredSD      MAESD
+1 1.893712 0.3642184 0.6037596 0.3245876  0.0763959 0.01721852
