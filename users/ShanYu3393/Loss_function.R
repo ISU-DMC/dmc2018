@@ -18,7 +18,9 @@ CondMedian_poi <- function(para,replication=500,type){
   # generate soldout day
   if (type=='poi'){
     A=sapply(1:replication,function(x) which(cumsum(rpois(n,lambda))>=r)[1])
-  } else {
+  } if (type=='binomial') {
+    A=sapply(1:replication,function(x) which(cumsum(rbinom(n,1-lambda))>=r)[1])
+  }else {
     A=sapply(1:replication,function(x) which(cumsum(rgeom(n,1-lambda))>=r)[1])
   }
   
@@ -59,7 +61,7 @@ Loss_MAE <- function(Para,ID,stock,Soldout,type){
   
   # create a wide matrix
   PARA=cbind(ID, Para) %>% spread(date, Para) 
-  PARA=cbind(PARA,stock) %>% select(-pid,-size)
+  PARA=cbind(PARA,stock) %>% dplyr::select(-pid,-size)
   
   # calculate conditional median for each item
   Pred=rep(0,length(Soldout))
@@ -67,8 +69,8 @@ Loss_MAE <- function(Para,ID,stock,Soldout,type){
   Pred[Soldout!=0]=Pred2
   
   # if this item has not sold out within the preiod
-  Pred[is.na(Pred)]=28
+  Pred[is.na(Pred)]=27
   
   # sum of absolute difference
-  mean(abs(Pred-Soldout))
+  Pred-Soldout
 }
