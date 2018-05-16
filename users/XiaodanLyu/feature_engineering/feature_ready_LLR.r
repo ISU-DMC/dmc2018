@@ -7,28 +7,36 @@ LLR_selection <- read.csv("../yuchenw2015/LLR_selection.csv", header = F)
 filetonodummy <- "/vol/data/zhuz/lyux/feature_rds/item_static_features_may10.rds"
 items <- read_rds(filetonodummy)
 which(!names.llr %in% names(items))
-LLR_fct <- items %>% dplyr::select(one_of(c("pid", "size", names.llr))) %>% 
-  mutate(key = paste(pid, size, sep = " - "))
+LLR_fct <- items %>% dplyr::select(one_of(c("pid", "size", names.llr))) #%>% 
+  # mutate(key = paste(pid, size, sep = " - "))
 LLR_fct %>% glimpse
 
 ## Cluster group by hengfang
-cluster_hf <- read_rds("../hengfang/cluster_2_9_freq_4.rds")
-cluster_hf <- cluster_hf %>% mutate_all(as.character)
-cluster_hf %>% glimpse
+# cluster_hf <- read_rds("../hengfang/cluster_2_9_freq_4.rds")
+# cluster_hf <- cluster_hf %>% mutate_all(as.character)
+# cluster_hf %>% glimpse
+cluster_hf <- read_rds("../hengfang/Cluster_Indicator_4_to_6_Specific.rds")
+cluster_hf <- cluster_hf %>%
+  mutate(size = replace(size, size == "", "42")) %>%
+  mutate_at(vars(Cluster_4:Cluster_6), as.character)
+cluster_hf %>% glimpse()
 all(cluster_hf$key %in% LLR_fct$key)
-LLR_cluster <- left_join(LLR_fct, cluster_hf, by = "key") %>% select(-key) %>%
-  mutate(pid = as.numeric(pid))
+LLR_cluster <- LLR_fct %>% mutate(pid = as.numeric(pid)) %>%
+  left_join(cluster_hf, by = c("pid", "size"))
+  # select(-key) %>%
+  
 LLR_cluster %>% glimpse
 
 ## alltrain with selected features by Xgboost and randomForest
-filetopath <- "/vol/data/zhuz/lyux/feature_rds/alltrain_subfeatures_may14.rds"
+filetopath <- "/vol/data/zhuz/lyux/feature_rds/Feb_alltrain_subfeatures_may14.rds"
 alltrain_sub <- readr::read_rds(filetopath)
 alltrain_sub %>% glimpse
 
 alltrain_LLR <- left_join(alltrain_sub, LLR_cluster, by = c("pid", "size"))
 glimpse(alltrain_LLR)
-
-write_rds(alltrain_LLR, "/vol/data/zhuz/lyux/feature_rds/LLR_alltrain_subfeatures_may14.rds")
+any(is.na(alltrain_LLR %>% select(-units)))
+alltrain_LLR$date %>% summary
+write_rds(alltrain_LLR, "/vol/data/zhuz/lyux/feature_rds/Feb_LLR_alltrain_subfeatures_may14.rds")
 
 ## Geometric Response Features
 rm(list = ls(all = T))
@@ -58,11 +66,17 @@ write.table(alltrain_freq4, "/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_subf
 names(alltrain_freq4) %>% sort
 
 ## principle components feature selection
-pc.all <- princomp(alltrain_LLR %>% select(-pid, -size, -date, -units, -X.Intercept., -contains("Cluster_")) %>%
-                     select_if(is.numeric), cor=TRUE)
-summary(pc.all)
-alltrain_sub_pcr <- cbind(alltrain_LLR %>% select(pid:units, stock.cut:Cluster_9), pc.all$scores[,1:40])
-write_rds(alltrain_sub_pcr, "/vol/data/zhuz/lyux/feature_rds/alltrain_sub_prc_may15.rds")
+rm(list = ls(all = T))
+alltrain_LLR <- read_rds("/vol/data/zhuz/lyux/feature_rds/Feb_LLR_alltrain_subfeatures_may14.rds")
+allX <- alltrain_LLR %>% select(-pid, -size, -date, -units,
+                        -X.Intercept., -contains("Cluster_")) %>% select_if(is.numeric)
+# pc.all <- princomp(cor(allX))
+pc.all2 <- princomp(allX)
+summary(pc.all2)
+alltrain_sub_pcr <- cbind(alltrain_LLR %>% select(pid:units, stock.cut:Cluster_6), pc.all2$scores[,1:40])
+any(is.na(alltrain_sub_pcr %>% select(-units)))
+alltrain_sub_pcr$date %>% summary
+write_rds(alltrain_sub_pcr, "/vol/data/zhuz/lyux/feature_rds/Feb_alltrain_sub_prc_may15.rds")
 
 ## before feature selection
 filetoalltrain <- "/vol/data/zhuz/lyux/feature_rds/alltrain_may14.rds"

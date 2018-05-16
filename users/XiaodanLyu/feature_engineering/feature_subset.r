@@ -40,15 +40,15 @@ var.in <- importance.feature %>% filter(High2.6. == 1 | Low2.6.100. == 1) %>%
   select(feature) %>% unlist %>% unname
 
 ## pid size date information
-filetolabel <- "/vol/data/zhuz/lyux/feature_rds/alllabel.rds"
+filetolabel <- "/vol/data/zhuz/lyux/feature_rds/Feb_alllabel.rds"
 alllabel <- readr::read_rds(filetolabel)
 
-filetoalltrain <- "/vol/data/zhuz/lyux/feature_rds/alltrain_may14.rds"
+filetoalltrain <- "/vol/data/zhuz/lyux/feature_rds/Feb_alltrain_may14.rds"
 alltrain_input <- readr::read_rds(filetoalltrain)
 all(var.in %in% names(alltrain_input))
 cbind(alllabel, alltrain_input %>% select(one_of(c("units", as.character(var.in))))) -> alltrain_subfeature
 
-write_rds(alltrain_subfeature, "/vol/data/zhuz/lyux/feature_rds/alltrain_subfeatures_may14.rds")
+write_rds(alltrain_subfeature, "/vol/data/zhuz/lyux/feature_rds/Feb_alltrain_subfeatures_may14.rds")
 
 ## response = "wait_time" ####
 ## feature selection indicators by Yuchen

@@ -1,6 +1,6 @@
 rm(list = ls(all = T))
 ## repsonse = units ####
-filetonodummy <- "/vol/data/zhuz/lyux/feature_rds/all_features_may14.rds"
+filetonodummy <- "/vol/data/zhuz/lyux/feature_rds/Feb_all_features_may14.rds"
 ## response = waiting_times ####
 # filetonodummy <- "/vol/data/zhuz/lyux/feature_rds/WT_all_features_may12.rds"
 ## delete some categorical variables not to be dummied ####
@@ -11,7 +11,7 @@ names.char <- format.df %>% mutate(var = rownames(format.df)) %>% rename(type = 
 names.pick <- c("size", "size4", "size.shape", "size.body", "mainCategory", "category", "subCategory",
                 "color", "color.coldorwarm", "pid.cut", "brand", "brand.NBA.team",
                 "relweekday", "relmonthweek", "stock.cut",
-                # "price.cut.FS29",
+                "price.cut.FS29",
                 "stock.units.cut", "date.wd", "date.wm")
 names.out <- names.char[-match(names.pick, names.char)]
 
@@ -21,12 +21,13 @@ alldata_thin %>% dim
 
 ## response = units ####
 alltrain <- data.frame(units = alldata_thin$units,
-                       model.matrix(units~., data = alldata_thin %>% dplyr::select(-pid, -size, -date, -releaseDate)))
-filetoalltrain <- "/vol/data/zhuz/lyux/feature_rds/alltrain_may14.rds"
+                       model.matrix(~., data = alldata_thin %>% dplyr::select(-units, -pid, -size, -date, -releaseDate)))
+filetoalltrain <- "/vol/data/zhuz/lyux/feature_rds/Feb_alltrain_may14.rds"
+any(is.na(alltrain %>% select(-units)))
 readr::write_rds(alltrain, filetoalltrain)
 
 label <- alldata_expand_date %>% dplyr::select(pid, size, date) 
-write_rds(label, "/vol/data/zhuz/lyux/feature_rds/alllabel.rds")
+write_rds(label, "/vol/data/zhuz/lyux/feature_rds/Feb_alllabel.rds")
 
 ## response = waiting_times ####
 ## version 1, no right-censored
