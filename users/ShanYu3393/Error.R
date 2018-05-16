@@ -5,9 +5,9 @@ rm(list = ls())
 
 source('ShanYu3393/Loss_function.R')
 source('ShanYu3393/generate_soldoutday.R')
-setwd("XiaodanLyu/TuneResults/meiling_kNN_Binary")
-k <- 4
-Pred <- read_rds("BinaryKNN_version3/BinaryPredJankNN_Month1_C5_4.rds")
+setwd("XiaodanLyu/TuneResults/meiling_NN_Binary/Binary_NN_version2")
+k <- 5
+Pred <- read_rds(sprintf("BinaryPredJanNN_Month1_C5_%s.rds", k))
 Data <- read_rds("/vol/data/zhuz/lyux/feature_rds/LLR_alltrain_subfeatures_may14.rds")
 Index <- read_rds("/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_cluster5_pcr_outlier_ID.rds")
 Index <- Index %>% mutate(date = ymd(date))
@@ -45,7 +45,7 @@ alltest.lowstock <- alltest %>% group_by(pid, size) %>%
 True <- alltest.lowstock %>% group_by(pid, size) %>%
   arrange(date) %>% 
   summarise(SoldOutDay = which(units == 1),
-            pred.SoldOutDay = which.max(pred.prob))
+            pred.SoldOutDay = which.min(pred.prob>=0.5))
 
 Err <- sqrt(sum(abs(True$SoldOutDay-True$pred.SoldOutDay)))
 
