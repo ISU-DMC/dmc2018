@@ -5,8 +5,9 @@ units_wide %>% mutate(total = rowSums(units_wide[,-1]),
 units_total %>% glimpse
 
 rm(list = ls(all = T))
-alltrain_freq4 <- read.table("/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_subfeatures_may14.txt",
-                             sep = "|", header = T)
+# alltrain_freq4 <- read.table("/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_subfeatures_may14.txt",
+#                              sep = "|", header = T)
+alltrain_freq4 <- read_rds("/vol/data/zhuz/lyux/feature_rds/alltrain_sub_prc_may15.rds")
 
 annie.hat.outlier.detect <- function(numCluster){
   ID.out <- c()
@@ -17,26 +18,29 @@ annie.hat.outlier.detect <- function(numCluster){
     #          trend.11teamsporting43, trend.amazon,
     #          trend.coupon, trend.clearance
     #          )
-    ## principle components
+    ## principle components ####
     # library(pls)
-    var.out <- names(alltrain_freq4_X)[apply(alltrain_freq4_X, 2, function(x) length(unique(x)) == 1)]
-    alltrain_freq4_X <- alltrain_freq4_X %>% select(-one_of(var.out))
-    pc.all <- princomp(alltrain_freq4_X %>% select(-pid, -size, -date, -units, -contains("Cluster_")), cor=TRUE)
-    summary(pc.all)
+    # var.out <- names(alltrain_freq4_X)[apply(alltrain_freq4_X, 2, function(x) length(unique(x)) == 1)]
+    # alltrain_freq4_X <- alltrain_freq4_X %>% select(-one_of(var.out))
+    # pc.all <- princomp(alltrain_freq4_X %>% select(-pid, -size, -date, -units, -contains("Cluster_")), cor=TRUE)
+    # summary(pc.all)
     # loadings(pc.all)
-    X <- data.frame(pc.all$scores[,1:30])
-    data_MLR <- data.frame(units = alltrain_freq4_X$units, X)
-    out <- lm(units~., data = data_MLR)
-    sprintf("r.squared: %.5f", summary(out)$r.squared)
-    sprintf("rmse: %.5f", summary(out)$sigma^2)
-    # print(anova(out))
-    # imI <- influence.measures(out)
-    # sum(imI$is.inf)
+    # X <- data.frame(pc.all$scores[,1:30])
+    # data_MLR <- data.frame(units = alltrain_freq4_X$units, X)
+    # out <- lm(units~., data = data_MLR)
+    # sprintf("r.squared: %.5f", summary(out)$r.squared)
+    # sprintf("rmse: %.5f", summary(out)$sigma^2)
+    ## glm poisson ####
+    data_MLR <- alltrain_freq4 %>% select(units, Comp.1:Comp.40)
+    out <- glm(units~., data = data_MLR, family = poisson)
     
     hat <- hatvalues(out)
     n <- nrow(data_MLR)
     k <- ncol(data_MLR)
     out.row <- which(hat > (3 * k)/n)
+    
+    # cooksd <- cooks.distance(out)
+    # out.row <- which(cooksd >= 1)
     
     ID.out <- rbind(ID.out, alltrain_freq4_X[out.row, c("pid", "size", "date", "units")])
   } 
