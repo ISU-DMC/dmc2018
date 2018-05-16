@@ -71,10 +71,10 @@ TuneNN <- train(y=Train$units,
                 x=Train %>% select(-units),
                 method = "nnet", trace = FALSE,
                 preProc = c("center", "scale"),
-                linout = TRUE,
+                # linout = TRUE,
                 maxit = 500,
-                tuneGrid=expand.grid(size = seq(1, 5, length.out = 5),
-                                     decay = seq(.3, .8, length.out = 6)),
+                tuneGrid=expand.grid(size = seq(1, 5, length.out = 1), #5
+                                     decay = seq(.3, .8, length.out = 1)), #6
                 trControl=cvControl) ## repeats = 10
 Sys.time() - T1
 
@@ -90,7 +90,7 @@ MSE <- function(x, y)
 
 MSPE <- MSE(Pred, Test$units)
 
-sink(sprintf("%sErrorNN_Month%s_C%s_%s.txt", Result_Dir_True, Month, Cluster, k))
+sink(sprintf("%sPredNN_Month%s_C%s_%s.txt", Result_Dir_True, Month, Cluster, k))
 sprintf("Prediction Error: %.5f", MSPE)
 cat("BestTune:", fill = T)
 print(TuneNN$results %>% filter(RMSE == min(RMSE)))

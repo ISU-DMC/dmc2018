@@ -4,7 +4,6 @@ library("dplyr")
 library("tidyr")
 library("lubridate")
 library("doMC")
-library("pROC")
 registerDoMC(cores = 16)
 
 ## Your netid
@@ -54,9 +53,9 @@ if(Month == 3){
 
 }
 
-Train <- Train[Train[,cluster_id] == k,] %>%
+Train <- Train[Train[,cluster_id] == k, ] %>%
 	 select_if(function(col) is.numeric(col)) %>% select(-pid)
-Test <- Test[Test[,cluster_id] == k,] %>%
+Test <- Test[Test[,cluster_id] == k, ] %>%
 	 select_if(function(col) is.numeric(col)) %>% select(-pid)
 
 ## delete columns with only one level
@@ -67,22 +66,24 @@ Test <- Test %>% select(-one_of(var.out))
 
 T1 <- Sys.time()
 
-cvControl <- trainControl(method = "repeatedcv", repeats = 1, number = 10, allowParallel = TRUE)
-Tune <- train(y=ifelse(Train$units>0, 1, 0) %>% as.factor,
-              x=Train %>% select(-units),
-              method="knn",
-              preProcess = c("center","scale"),
-              tuneGrid=data.frame(.k=50),
-              trControl=cvControl) ## repeats = 10
+cvControl <- trainControl(method = "repeatedcv", repeats = 10, number = 10, allowParallel = TRUE)
+TuneNN <- train(y=ifelse(Train$units>0, 1, 0) %>% as.factor,
+                x=Train %>% select(-units),
+                method = "nnet", trace = FALSE,
+                preProc = c("center", "scale"),
+                linout = TRUE,
+                maxit = 500,
+                tuneGrid=expand.grid(size = seq(1, 5, length.out = 5),
+                                     decay = seq(.3, .8, length.out = 6)),
+                trControl=cvControl) ## repeats = 10
 Sys.time() - T1
 
-
 Pred <- predict(Tune, newdata=Test, type = "prob")
-write_rds(Pred, sprintf("%sBinaryPredJankNN_Month%s_C%s_%s.rds", Result_Dir_True, Month, Cluster, k))
+write_rds(Pred, sprintf("%sBinaryPredJanNN_Month%s_C%s_%s.rds", Result_Dir_True, Month, Cluster, k))
 
 # AUC <- roc(ifelse(Test$units>0, 1, 0), Pred$`1`)$auc
 
-sink(sprintf("%sBinaryPredkNN_Month%s_C%s_%s.txt", Result_Dir_True, Month, Cluster, k))
+sink(sprintf("%sBinaryPredNN_Month%s_C%s_%s.txt", Result_Dir_True, Month, Cluster, k))
 # print(AUC)
 cat("BestTune:", fill = T)
 print(Tune$results %>% filter(Accuracy == max(Accuracy)))
