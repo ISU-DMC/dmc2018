@@ -70,6 +70,7 @@ rm(list = ls(all = T))
 alltrain_LLR <- read_rds("/vol/data/zhuz/lyux/feature_rds/Feb_LLR_alltrain_subfeatures_may14.rds")
 allX <- alltrain_LLR %>% select(-pid, -size, -date, -units,
                         -X.Intercept., -contains("Cluster_")) %>% select_if(is.numeric)
+
 # pc.all <- princomp(cor(allX))
 pc.all2 <- princomp(allX)
 summary(pc.all2)
