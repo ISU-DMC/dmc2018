@@ -75,11 +75,17 @@ write_rds(alltrain_pcr, "/vol/data/zhuz/lyux/feature_rds/alltrain_pcr30_may14.rd
 ## cluster_4_hf_specific
 rm(list = ls(all = T))
 cluster_hf <- read_rds("../hengfang/Cluster_Indicator_4_to_6_Specific.rds")
-cluster_hf <- cluster_hf %>% mutate(size = replace(size, size == "", "42"))
+cluster_hf <- cluster_hf %>% mutate(size = replace(size, size == "", "42")) %>%
+  mutate_at(vars(Cluster_4:Cluster_6), as.character)
 alltrain_sub_pcr <- read_rds("/vol/data/zhuz/lyux/feature_rds/alltrain_sub_prc_may15.rds")
 alltrain_sub_pcr_cl4 <- alltrain_sub_pcr %>% select(-contains("Cluster_")) %>% 
-  left_join(cluster_hf, by = c("pid", "size")) %>%
-  mutate_at(vars(Cluster_4:Cluster_6), as.character)
+  left_join(cluster_hf, by = c("pid", "size")) 
 any(is.na(alltrain_sub_pcr_cl4))
 write_rds(alltrain_sub_pcr_cl4, "/vol/data/zhuz/lyux/feature_rds/alltrain_sub_prc_cl4_may16.rds")
 
+## cluster_4_before_pcr
+alltrain_LLR <- read_rds("/vol/data/zhuz/lyux/feature_rds/LLR_alltrain_subfeatures_may14.rds")
+alltrain_LLR_cl4 <- alltrain_LLR %>% select(-contains("Cluster_")) %>%
+  left_join(cluster_hf, by = c("pid", "size"))
+any(is.na(alltrain_LLR_cl4))
+write_rds(alltrain_LLR_cl4, "/vol/data/zhuz/lyux/feature_rds/alltrain_subfeature_cl4_may16.rds")

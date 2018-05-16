@@ -1,0 +1,4 @@
+[1] "Prediction Error: 2.01831"
+BestTune:
+   k      RMSE   Rsquared   RMSESD RsquaredSD
+1 35 0.2207379 0.05990241 0.044512 0.02586134
