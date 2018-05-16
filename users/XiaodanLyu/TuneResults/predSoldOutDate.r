@@ -1,7 +1,9 @@
 setwd("~/dmc_2018/TuneResults")
 Results <- read_rds("Errorxgboost_Month1_C5_1.rds")
-Data <- read_rds("/vol/data/zhuz/lyux/feature_rds/LLR_alltrain_subfeatures_may14.rds")
-Index <- read_rds("/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_outlier_ID.rds")
+# Data <- read_rds("/vol/data/zhuz/lyux/feature_rds/LLR_alltrain_subfeatures_may14.rds")
+# Index <- read_rds("/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_outlier_ID.rds")
+Data <- read_rds("/vol/data/zhuz/lyux/feature_rds/alltrain_sub_prc_may15.rds")
+Index <- read_rds("/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_cluster5_pcr_outlier_ID.rds")
 Index <- Index %>% mutate(date = ymd(date))
 Data_No_NA <- Data %>% filter(!is.na(Cluster_2))
 
