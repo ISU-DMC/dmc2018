@@ -71,3 +71,15 @@ pc.all <- princomp(alltrain_input %>% select(-units), cor = TRUE)
 sum(cumsum(pc.all$sdev^2/sum(pc.all$sdev^2))  <= 0.80)
 alltrain_pcr <- cbind(alltrain_input %>% select(units), pc.all$scores[,1:30])
 write_rds(alltrain_pcr, "/vol/data/zhuz/lyux/feature_rds/alltrain_pcr30_may14.rds")
+
+## cluster_4_hf_specific
+rm(list = ls(all = T))
+cluster_hf <- read_rds("../hengfang/Cluster_Indicator_4_to_6_Specific.rds")
+cluster_hf <- cluster_hf %>% mutate(size = replace(size, size == "", "42"))
+alltrain_sub_pcr <- read_rds("/vol/data/zhuz/lyux/feature_rds/alltrain_sub_prc_may15.rds")
+alltrain_sub_pcr_cl4 <- alltrain_sub_pcr %>% select(-contains("Cluster_")) %>% 
+  left_join(cluster_hf, by = c("pid", "size")) %>%
+  mutate_at(vars(Cluster_4:Cluster_6), as.character)
+any(is.na(alltrain_sub_pcr_cl4))
+write_rds(alltrain_sub_pcr_cl4, "/vol/data/zhuz/lyux/feature_rds/alltrain_sub_prc_cl4_may16.rds")
+
