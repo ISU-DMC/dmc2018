@@ -18,9 +18,9 @@ CondMedian_poi <- function(para,replication=500,type){
   # generate soldout day
   if (type=='poi'){
     A=sapply(1:replication,function(x) which(cumsum(rpois(n,lambda))>=r)[1])
-  } if (type=='binomial') {
+  } else if (type=='binomial') {
     A=sapply(1:replication,function(x) which(cumsum(rbinom(n,1-lambda))>=r)[1])
-  }else {
+  } else {
     A=sapply(1:replication,function(x) which(cumsum(rgeom(n,1-lambda))>=r)[1])
   }
   
