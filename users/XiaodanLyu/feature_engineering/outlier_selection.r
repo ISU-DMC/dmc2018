@@ -34,13 +34,13 @@ annie.hat.outlier.detect <- function(numCluster){
     data_MLR <- alltrain_freq4 %>% select(units, Comp.1:Comp.40)
     out <- glm(units~., data = data_MLR, family = poisson)
     
-    hat <- hatvalues(out)
-    n <- nrow(data_MLR)
-    k <- ncol(data_MLR)
-    out.row <- which(hat > (3 * k)/n)
+    # hat <- hatvalues(out)
+    # n <- nrow(data_MLR)
+    # k <- ncol(data_MLR)
+    # out.row <- which(hat > (3 * k)/n)
     
-    # cooksd <- cooks.distance(out)
-    # out.row <- which(cooksd >= 1)
+    cooksd <- cooks.distance(out)
+    out.row <- which(cooksd >= 1)
     
     ID.out <- rbind(ID.out, alltrain_freq4_X[out.row, c("pid", "size", "date", "units")])
   } 
@@ -56,7 +56,7 @@ ID.out <- cbind(annie.hat.outlier.detect(5), cluster = "Cluster_5")
 ID.out %>% glimpse()
 ID.out$cluster %>% table
 
-write_rds(ID.out, "/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_cluster5_pcr_outlier_ID.rds")
+write_rds(ID.out, "/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_cluster5_pois_outlier_ID.rds")
 
 write_rds(ID.out, "/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_outlier_ID.rds")
 write.table(ID.out, "/vol/data/zhuz/lyux/feature_rds/alltrain_freq4_outlier_ID.txt",

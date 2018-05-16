@@ -4,7 +4,7 @@ library("dplyr")
 library("tidyr")
 library("lubridate")
 library("doMC")
-registerDoMC(cores = 10)
+registerDoMC(cores = 16)
 
 ## Your netid
 netid <- "yudiz"
