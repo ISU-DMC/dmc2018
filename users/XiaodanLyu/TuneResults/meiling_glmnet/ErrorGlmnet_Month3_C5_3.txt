@@ -1,0 +1,7 @@
+[1] "Prediction Error: 0.49035"
+BestTune:
+  alpha lambda     RMSE Rsquared    RMSESD RsquaredSD
+1     0      0 1.330086 0.107908 0.1255805 0.01210312
+ResultsTune:
+  alpha lambda     RMSE Rsquared    RMSESD RsquaredSD
+1     0      0 1.330086 0.107908 0.1255805 0.01210312
