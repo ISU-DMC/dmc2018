@@ -63,3 +63,11 @@ pc.all <- princomp(alltrain_LLR %>% select(-pid, -size, -date, -units, -X.Interc
 summary(pc.all)
 alltrain_sub_pcr <- cbind(alltrain_LLR %>% select(pid:units, stock.cut:Cluster_9), pc.all$scores[,1:40])
 write_rds(alltrain_sub_pcr, "/vol/data/zhuz/lyux/feature_rds/alltrain_sub_prc_may15.rds")
+
+## before feature selection
+filetoalltrain <- "/vol/data/zhuz/lyux/feature_rds/alltrain_may14.rds"
+alltrain_input <- readr::read_rds(filetoalltrain)
+pc.all <- princomp(alltrain_input %>% select(-units), cor = TRUE)
+sum(cumsum(pc.all$sdev^2/sum(pc.all$sdev^2))  <= 0.80)
+alltrain_pcr <- cbind(alltrain_input %>% select(units), pc.all$scores[,1:30])
+write_rds(alltrain_pcr, "/vol/data/zhuz/lyux/feature_rds/alltrain_pcr30_may14.rds")
