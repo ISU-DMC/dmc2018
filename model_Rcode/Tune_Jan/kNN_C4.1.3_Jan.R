@@ -53,19 +53,19 @@ Tune <- train(y=Train$units,
               x=Train %>% select(-units),
               method=method,
               preProcess = c("center","scale"),
-              tuneGrid=data.frame(.k=seq(15,20,by=1)), ########### tune this !!!
+              tuneGrid=data.frame(.k=c(15, 18, 20)), ########### tune this !!!
               trControl=cvControl)
 
 
 Pred <- predict(Tune, newdata=Test)
 Feb_results <- Test %>% select(pid, size, date) %>% mutate(pred.units = Pred)
-write_rds(Feb_results, sprintf("%sFebPred%s_Month%s_C%s_%s.rds", Result_Dir_True,method, Month, Cluster, k))
+write_rds(Feb_results, sprintf("%sFebPred%s_Month%s_C%s_1_3.rds", Result_Dir_True,method, Month, Cluster))
 
 
 # MSPE = mean((Pred-Test$units)^2,na.rm=TRUE)
 
 
-sink(sprintf("%sTuneResults%s_Month%s_C%s_%s.txt", Result_Dir_True, method,Month, Cluster, k))
+sink(sprintf("%sTuneResults%s_Month%s_C%s_1_3.txt", Result_Dir_True, method,Month, Cluster))
 # sprintf("Prediction Error: %.5f", MSPE)
 cat("BestTune:", fill = T)
 print(Tune$results %>% filter(RMSE == min(RMSE)))
