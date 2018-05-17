@@ -1,6 +1,6 @@
 ## define summaryFunction
 ## This is for poisson distribution
-CondMedian_poi <- function(para,replication=500,type){
+CondMedian_poi <- function(para,replication=1000,type){
   
   # adjust NA
   t0=sum(is.na(para))
@@ -74,3 +74,50 @@ Loss_MAE <- function(Para,ID,stock,Soldout,type){
   # sum of absolute difference
   Pred-Soldout
 }
+
+Predict_sold <- function(Para,ID,stock,type){
+  ## Input: 
+  # Para: estimated daily parameters
+  # ID: pid size date
+  # stock：the number of item need to be soldout
+  # Soldout: the truth sold out date
+  
+  # create a wide matrix
+  PARA=cbind(ID, Para) %>% spread(date, Para) 
+  ID=PARA %>% dplyr::select(pid,size)
+  PARA=cbind(PARA,stock) %>% dplyr::select(-pid,-size)
+  
+  # calculate conditional median for each item
+  Pred=apply(PARA,1,CondMedian_poi,type=type)
+  
+  # if this item has not sold out within the preiod
+  # Pred[is.na(Pred)]=27
+  
+  # sum of absolute difference
+  ID$Pred=Pred
+  return(ID)
+}
+
+Predict_sold_mean <- function(Para,ID,stock,type){
+  ## Input: 
+  # Para: estimated daily parameters
+  # ID: pid size date
+  # stock：the number of item need to be soldout
+  # Soldout: the truth sold out date
+  
+  # create a wide matrix
+  PARA=cbind(ID, Para) %>% spread(date, Para) 
+  ID=PARA %>% dplyr::select(pid,size)
+  PARA=cbind(PARA,stock) %>% dplyr::select(-pid,-size)
+  
+  # calculate conditional median for each item
+  Pred=apply(PARA,1,Mean_poi)
+  
+  # if this item has not sold out within the preiod
+  # Pred[is.na(Pred)]=27
+  
+  # sum of absolute difference
+  ID$Pred=Pred
+  return(ID)
+}
+

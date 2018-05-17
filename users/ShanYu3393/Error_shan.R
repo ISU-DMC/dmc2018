@@ -3,8 +3,11 @@ rm(list = ls())
 source('/Users/shanyu/Dropbox/DMC/dmc2018/users/ShanYu3393/Loss_function.R')
 source('/Users/shanyu/Dropbox/DMC/dmc2018/users/ShanYu3393/generate_soldoutday.R')
 
-filepath="/Users/shanyu/Dropbox/DMC/dmc2018/users/XiaodanLyu/TuneResults_Cl4/PredJannnet_Month1_C4_3.rds"
+filepath="/Users/shanyu/Dropbox/DMC/dmc2018/users/XiaodanLyu/TuneResults_Cl4/PredJanxgbTree_Month1_C4_4.rds"
+
 alltest=readRDS(filepath)
+
+# alltest=read.csv(filepath)[,-1]
 
 Soldout <- alltest %>% group_by(pid, size) %>%
   mutate(
@@ -27,20 +30,20 @@ pred_Jan <-Soldout %>%
            replace(pred_soldOutDate,
                    pred_soldOutDate == ymd("2018-02-01"), ymd("2018-01-23")))
 
-(pred_Jan$pred_soldOutDate - pred_Jan$soldOutDate)[pred_Jan$soldOutDate!='2018-02-01'] %>%
+(pred_Jan$pred_soldOutDate - pred_Jan$soldOutDate)%>%
   as.numeric %>% abs %>% sum %>% sqrt 
 
 #True <- Stock_Soldoutday(alltest[,1:3],alltest[,4])
 
-Result <- Loss_MAE(alltest[,5],alltest[,1:3],Soldout$stock,
-         as.numeric(Soldout$soldOutDate-ymd("2018-01-04")),'geom')
-Error <- sqrt(sum(abs(Result[pred_Jan$soldOutDate!='2018-02-01'])))
+Result <- Loss_MAE(alltest$pred.units,alltest %>% select(pid,size,date),
+         Soldout$stock, as.numeric(Soldout$soldOutDate-ymd("2018-01-03")),'poi')
+Error <- sqrt(sum(abs(Result)))
 
 Error
 
-#RG.Error <- sqrt(sum(abs(as.numeric(Soldout$soldOutDate - ymd("2018-01-18")))))
+RG.Error <- sqrt(sum(abs(as.numeric(Soldout$soldOutDate - ymd("2018-01-18")))))
 
-#RG.Error
+RG.Error
 
 sprintf("Model Error:%.5f", Error)
 sprintf("Random Guess Error:%.5f", RG.Error)

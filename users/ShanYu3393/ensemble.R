@@ -1,3 +1,4 @@
+rm(list=ls())
 library("readr")
 library("dplyr")
 library("tidyr")
@@ -6,9 +7,9 @@ library("lubridate")
 
 # Cluster by Clusert Ensemble
 
-k <- 3
+k <- 4
 Month <- 1
-Rep_Time <- 1
+Rep_Time <- 10
 
 source("/Users/shanyu/Dropbox/DMC/dmc2018/users/ShanYu3393/Loss_function.R")
 Result_Dir <- "/Users/shanyu/Dropbox/DMC/ensemble_results/"
@@ -55,7 +56,7 @@ eval(parse(
 
 
 
-setwd("/Users/shanyu/Dropbox/DMC/dmc2018/users/XiaodanLyu/TuneResults_Cl4/")
+setwd("/Users/shanyu/Dropbox/DMC/dmc2018/users/XiaodanLyu/TuneResults_Cl4/best_tune")
 
 
 
@@ -201,7 +202,7 @@ cat("BestCMWeight:", fill = T)
 print(unlist(Weight_Final[Index_CM,]))
 sprintf("Random Guess Error: %.5f", mean(Error_Matrix[,3]))
 sink()
-
+ 
 
 
 
