@@ -1,0 +1,6 @@
+BestTune:
+  size decay      RMSE    Rsquared     RMSESD  RsquaredSD
+1    5 1e-06 0.2040232 0.002049287 0.03221262 0.004720862
+TuneResults:
+  size decay      RMSE    Rsquared     RMSESD  RsquaredSD
+1    5 1e-06 0.2040232 0.002049287 0.03221262 0.004720862
