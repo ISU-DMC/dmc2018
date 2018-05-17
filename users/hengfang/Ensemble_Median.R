@@ -148,7 +148,7 @@ for(Loop in 1:Ensemble_Number)
     Error_Tmp[s, 4] <- (ymd("2018-01-03") + sample(1:28, 1) - pred_Jan$soldOutDate) %>% as.numeric %>% abs %>% sum %>% sqrt
     ## conditional median
     Result <- Loss_MAE(Pred_cl$pred.units, Pred_cl %>% select(pid, size, date),
-      pred_Jan$stock, as.numeric(pred_Jan$soldOutDate-ymd("2018-01-03")),'geom')
+      pred_Jan$stock, as.numeric(pred_Jan$soldOutDate-ymd("2018-01-03")),'poi')
     Error_Tmp[s, 5] <- sqrt(sum(abs(Result[pred_Jan$soldOutDate!='2018-02-01'])))
 
 
