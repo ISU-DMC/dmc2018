@@ -69,7 +69,7 @@ Loss_MAE <- function(Para,ID,stock,Soldout,type){
   Pred[Soldout!=0]=Pred2
   
   # if this item has not sold out within the preiod
-  Pred[is.na(Pred)]=23
+  Pred[is.na(Pred)]=27
   
   # sum of absolute difference
   Pred-Soldout

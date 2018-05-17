@@ -5,6 +5,9 @@ library(pROC)
 library(tidyr);library(dplyr)
 library(readr)
 
+source('/Users/shanyu/Dropbox/DMC/dmc2018/users/ShanYu3393/Loss_function.R')
+source('/Users/shanyu/Dropbox/DMC/dmc2018/users/ShanYu3393/generate_soldoutday.R')
+
 code_LLR <- function(train,response) {
   name <- colnames(train)
   fac <- which(sapply(train[1,], is.factor))
@@ -42,17 +45,17 @@ feature <- function(train, codebook){
 TrainGeo_all = readRDS('/Users/shanyu/Desktop/DMC/Geo_LLR_alltrain_subfeatures_may14.rds')
 ## read in data
 
-for (cluster in 1:5){
+for (cluster in 1:4){
   TrainGeo = TrainGeo_all %>%
-    mutate_if(is.character,as.factor) %>% filter(Cluster_5==cluster, date.day <= 95) %>%
-    dplyr::select(-(Cluster_2:Cluster_5)) 
+    mutate_if(is.character,as.factor) %>% filter(Cluster_4==cluster, date.day <= 95) %>%
+    dplyr::select(-(Cluster_2:Cluster_9)) 
   
   ID_train=TrainGeo %>% group_by(pid,size,date) %>% tally()
   
   ID_train=left_join(TrainGeo, ID_train, by=c('pid','size','date')) %>% 
-    select(pid,size,date,n)
+    dplyr::select(pid,size,date,n)
   
-  TrainGeo = TrainGeo %>% select(-pid, -size, -date)
+  TrainGeo = TrainGeo %>% dplyr::select(-pid, -size, -date)
   
   codebook <- code_LLR(TrainGeo, response = train$units)
   
@@ -60,16 +63,11 @@ for (cluster in 1:5){
   
   TrainGeo <- TrainGeo[,sapply(TrainGeo[1,],is.numeric)]
   
-  paras <- expand.grid(nrounds=c(10,20,30,40,50,80,100),
-                       max_depth=c(4,6,8,10),
-                       subsample=c(0.5,0.6,0.7,0.8))
-  
-  BestPara <- paras[Best[cluster,2],]
-  
   xgb<-xgboost(data=data.matrix(TrainGeo[,-1]),label=TrainGeo[,1],
                weight = 1/ID_train$n,
-                 max_depth=10, subsample=0.5,
-               objective="binary:logistic",nrounds = 100)
+               eta=0.3, max_depth=3, colsample_bytree = 1, 
+               subsample=0.75, nrounds = 100,
+               objective="binary:logistic")
   
   importance=xgb.importance(colnames(data.matrix(TrainGeo[,-1])), model = xgb)  
   xgb.plot.importance(importance_matrix = importance,top_n = 50)
@@ -77,10 +75,10 @@ for (cluster in 1:5){
   # --------- read in feature
   filepath='/Users/shanyu/Desktop/LLR_alltrain_subfeatures_may14.rds'
   Test_data <- readRDS(filepath) %>% mutate_if(is.character,as.factor) 
-  Test_feature <- Test_data %>% filter(Cluster_5==cluster, date.day > 95) %>%
-    dplyr::select(-(Cluster_2:Cluster_5)) %>% select(-pid, -size, -date)
-  TRUE_data <- Test_data  %>% filter(Cluster_5==cluster, date.day > 95) %>%
-    dplyr::select(-(Cluster_2:Cluster_5)) %>% select(pid, size, date, units)
+  Test_feature <- Test_data %>% filter(Cluster_4==cluster, date.day > 95) %>%
+    dplyr::select(-(Cluster_2:Cluster_4)) %>% select(-pid, -size, -date)
+  TRUE_data <- Test_data  %>% filter(Cluster_4==cluster, date.day > 95) %>%
+    dplyr::select(-(Cluster_2:Cluster_4)) %>% select(pid, size, date, units)
   
   # ----------- create LLR
   test <- feature(Test_feature,codebook)
@@ -90,9 +88,11 @@ for (cluster in 1:5){
   
   # --------- predict sold out day
   Sold <- Stock_Soldoutday(TRUE_data[,1:3],TRUE_data[,4])
-  Error <- Loss_MAE(y_pred, TRUE_data[,1:3], Sold$stock, 
-                    Sold$SoldOutDay, 'geom')
-  
+  Result <- Loss_MAE(y_pred, TRUE_data[,1:3], Sold$stock, 
+                     Sold$SoldOutDay, 'geom')
+  hist(Result)
+  Error <- sqrt(sum(abs(Result)))
+  Error 
 }
 
 
