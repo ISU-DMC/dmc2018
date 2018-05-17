@@ -10,7 +10,7 @@ registerDoMC(cores = 16)
 netid <- "abhishek" ############################# change this !!!!!!!!!!
 Month <- 1
 Cluster <- 4
-k <- 2 ################################## change this!!!!!!!!! try 2,3,4
+k <- 3 ################################## change this!!!!!!!!! try 2,3,4
 
 ## create folder
 Result_Dir_True <- sprintf("/work/STAT/%s/Tune_Results/", netid)
@@ -28,15 +28,15 @@ Data <- read_rds("Cache/Feb_alltrain_sub_prc_may15.rds")
 # Data Preprocessing
 # Eliminate 
 if(Month == 3){
-	Train <- Data %>% filter(date <= "2018-01-03")
-	Test <- Data %>% filter(date >= "2018-01-04", date<"2018-02-01")
+  Train <- Data %>% filter(date <= "2018-01-03")
+  Test <- Data %>% filter(date >= "2018-01-04", date<"2018-02-01")
 }else{
-	Train <- Data %>% filter(date <= "2018-01-03", date >= "2017-12-04")
-	Test <- Data %>% filter(date >= "2018-01-04", date<"2018-02-01")
+  Train <- Data %>% filter(date <= "2018-01-03", date >= "2017-12-04")
+  Test <- Data %>% filter(date >= "2018-01-04", date<"2018-02-01")
 }
 
 Train <- Train[Train[,cluster_id] == k,] %>%
-	 select_if(function(col) is.numeric(col)) %>% select(-pid)
+  select_if(function(col) is.numeric(col)) %>% select(-pid)
 Test <- Test[Test[,cluster_id] == k,]
 
 ## delete columns with only one level
