@@ -40,7 +40,7 @@ Test <- Data %>% filter(date >= "2018-02-01")
 
 Train <- Train[Train[,cluster_id] %in% k,] %>%
   select_if(function(col) is.numeric(col)) %>% select(-pid)
-Test <- Test[Test[,cluster_id] == k,]
+Test <- Test[Test[,cluster_id] %in% k,]
 
 ## delete columns with only one level
 var.out <- names(Train)[apply(Train, 2, function(x) length(unique(x)) == 1)]
