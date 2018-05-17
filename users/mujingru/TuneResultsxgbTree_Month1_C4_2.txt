@@ -1,0 +1,16 @@
+BestTune:
+  eta max_depth gamma colsample_bytree min_child_weight subsample nrounds
+1 0.3         3     0                1                1      0.75     150
+       RMSE  Rsquared    RMSESD RsquaredSD
+1 0.8889293 0.3065918 0.1278934 0.07016065
+TuneResults:
+  eta max_depth gamma colsample_bytree min_child_weight subsample nrounds
+1 0.3         3     0                1                1      0.60     100
+3 0.3         3     0                1                1      0.75     100
+2 0.3         3     0                1                1      0.60     150
+4 0.3         3     0                1                1      0.75     150
+       RMSE  Rsquared    RMSESD RsquaredSD
+1 0.8934134 0.3014507 0.1284922 0.07159507
+3 0.8927724 0.3001046 0.1262732 0.07004294
+2 0.8892235 0.3089318 0.1265722 0.07047973
+4 0.8889293 0.3065918 0.1278934 0.07016065
