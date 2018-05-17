@@ -10,7 +10,7 @@ registerDoMC(cores = 16)
 netid <- "mujingru" ############################# change this !!!!!!!!!!
 Month <- 1
 Cluster <- 4
-k <- 2 ################################## change this!!!!!!!!! try 2,3,4
+k <- 4 ################################## change this!!!!!!!!! try 2,3,4
 
 ## create folder
 Result_Dir_True <- sprintf("/work/STAT/%s/Tune_Results/", netid)
@@ -57,7 +57,7 @@ Tune <- train(y = Train$units,
               tuneGrid = data.frame(
                 expand.grid(nrounds = c(100,150),
                             max_depth = 3, eta= 0.3,
-                            subsample= c(0.6, 0.75), 
+                            subsample= c(0.5, 0.75), 
                             gamma= 0, min_child_weight = 1, colsample_bytree= 1)),   
               trControl=cvControl, maximize = F)
 
