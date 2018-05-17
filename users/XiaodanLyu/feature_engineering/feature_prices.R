@@ -43,7 +43,8 @@ prices_feature <- prices_feature %>% mutate(size = replace(size, size == "", "42
 items <- items %>% mutate(pid = as.numeric(pid))
 
 ## join three datasets
-alldata <- prices_feature %>% filter(date < ymd("2018-02-01")) %>%
+alldata <- prices_feature %>%
+  # filter(date < ymd("2018-02-01")) %>%
   full_join(train, by = c("pid", "size", "date")) %>% 
   full_join(items, by = c("pid", "size")) %>%
   full_join(trend.google, by = "date") %>%
@@ -52,7 +53,7 @@ alldata <- prices_feature %>% filter(date < ymd("2018-02-01")) %>%
          discount = (rrp-price)/rrp*100)
 
 alldata %>% dplyr::select(pid, size) %>% unique %>% dim
-any(is.na(alldata))
+any(is.na(alldata %>% select(-units)))
 
 trendXstock <- as.matrix(alldata %>% dplyr::select(contains("trend"))) * alldata$stock
 colnames(trendXstock) <- paste0("trendXstock_", colnames(trendXstock))
@@ -79,6 +80,7 @@ for(i in 1:nrow(names.trendXfreq.final)){
                                alldata[,name.var1]*alldata[,name.var2])
   colnames(trendXfreq_features)[i+1] <- paste(name.var1, name.var2, sep = "X")
 }
+trendXfreq_features %>% glimpse
 any(is.na(trendXfreq_features))
 
 alldata_expand <- cbind(alldata, trendXstock, trendXprice, trendXdiscount, trendXfreq_features)
@@ -89,6 +91,9 @@ alldata_expand_date <- alldata_expand %>% mutate(
   date.wd = weekdays(date),
   date.wm = ceiling((day(date) + first_day_of_month_wday(date) - 1) / 7) %>% as.character
 )
-any(is.na(alldata_expand_date))
+any(is.na(alldata_expand_date %>% select(-units)))
 
-readr::write_rds(alldata_expand_date, "/vol/data/zhuz/lyux/feature_rds/all_features_may14.rds")
+alldata_expand_date$date %>% summary 
+
+readr::write_rds(alldata_expand_date %>% select(-id), "/vol/data/zhuz/lyux/feature_rds/Feb_all_features_may14.rds")
+
