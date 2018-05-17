@@ -35,7 +35,7 @@ Data <- read_rds("Cache/Feb_alltrain_sub_prc_may15.rds")
 #   Test <- Data %>% filter(date >= "2018-01-04", date<"2018-02-01")
 # }
 
-Train <- Data %>% filter(date >= "2018-01-04", date <= "2018-01-31")
+Train <- Data %>% filter(date >= "2018-01-01", date <= "2018-01-31")
 Test <- Data %>% filter(date >= "2018-02-01")
 
 Train <- Train[Train[,cluster_id] %in% k,] %>%

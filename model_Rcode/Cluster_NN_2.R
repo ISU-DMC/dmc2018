@@ -48,9 +48,9 @@ Train <- Train %>% select(-one_of(var.out))
 method <- "nnet"
 cvControl <- trainControl(method = "repeatedcv", repeats = 10, number = 10, allowParallel = TRUE)
 Tune <- train(y=Train$units, x=Train %>% select(-units), method =method,
-		tuneGrid=expand.grid(size = seq(1, 5, length.out = 5),
-                                decay = seq(.3, 0.8, length.out = 6)), ## 6
-                trControl=cvControl) 
+              tuneGrid=expand.grid(size = seq(1, 5, length.out = 5),
+                                   decay = seq(.3, 0.8, length.out = 6)), ## 6
+              trControl=cvControl) 
 
 
 Pred <- predict(Tune, newdata=Test)

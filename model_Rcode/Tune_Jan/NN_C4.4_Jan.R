@@ -7,7 +7,7 @@ library("doMC")
 registerDoMC(cores = 16)
 
 ## Your netid
-netid <- "mujingru" ############################# change this !!!!!!!!!!
+netid <- "yudiz" ############################# change this !!!!!!!!!!
 Month <- 1
 Cluster <- 4
 k <- 4 ################################## change this!!!!!!!!! try 2,3,4
@@ -47,19 +47,12 @@ var.out <- names(Train)[apply(Train, 2, function(x) length(unique(x)) == 1)]
 Train <- Train %>% select(-one_of(var.out))
 
 
-method <- "xgbTree"
+method <- "nnet"
 cvControl <- trainControl(method = "repeatedcv", repeats = 10, number = 10, allowParallel = TRUE)
-Tune <- train(y = Train$units,
-              x = Train %>% select(-units),
-              method = method,
-              family = "poisson",
-              preProcess = c("center","scale"),
-              tuneGrid = data.frame(
-                expand.grid(nrounds = c(100,150),
-                            max_depth = 3, eta= 0.3,
-                            subsample= c(0.5, 0.75), 
-                            gamma= 0, min_child_weight = 1, colsample_bytree= 1)),   
-              trControl=cvControl, maximize = F)
+Tune <- train(y=Train$units, x=Train %>% select(-units), method =method,
+              tuneGrid=expand.grid(size = seq(5, 6, length.out = 1),
+                                   decay = 1e-06), ## 6
+              trControl=cvControl) 
 
 
 Pred <- predict(Tune, newdata=Test)
