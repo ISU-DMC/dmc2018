@@ -4,7 +4,6 @@
 | ------ | ------ |
 | ------ | Abhishek |
 
-to be announced later...
 
 ### Meet the members
 
